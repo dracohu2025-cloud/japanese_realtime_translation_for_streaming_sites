@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>Kotoba Live · 设置</title><link rel="stylesheet" href="ui.css"></head>
+<body><main class="settings">
+  <div class="brand">ことば / Kotoba Live <span class="tag">LOCAL BETA</span></div>
+  <h1>把字幕调成你的样子。</h1><p class="muted">先连接本机服务，再回到视频页面开始翻译。设置会在下次开始时生效。</p>
+  <form id="form">
+    <label>本机服务地址<input id="relayUrl" required value="ws://127.0.0.1:8787/stream" spellcheck="false"></label>
+    <label>配对码<small>也可在插件弹窗里填写或从本机服务读取。这里填写的是配对码，不是 Soniox API Key。</small><input id="token" type="password" required minlength="24" autocomplete="off"></label>
+    <label>内容背景 <small>可选，例如「产品设计课程」或「日本旅行访谈」，最多 1000 字。此信息会发送给语音服务商。</small><textarea id="context" maxlength="1000" placeholder="这段内容主要在讲什么？"></textarea></label>
+    <label>日语术语<small>可选，使用逗号或换行分隔；最多 30 个，每个最多 60 字。</small><textarea id="terms" placeholder="例如：生成AI、デザインシステム"></textarea></label>
+    <label class="check"><input id="showOriginal" type="checkbox" checked>同时显示日语原文</label>
+    <label>译文字幕大小 <span id="sizeLabel">28 px</span><input id="fontSize" type="range" min="18" max="42" value="28"></label>
+    <label>字幕背景不透明度 <span id="opacityLabel">90%</span><input id="opacity" type="range" min="0" max="100" value="90"></label>
+    <div class="actions"><button type="submit">保存设置</button><span id="feedback" role="status"></span></div>
+  </form>
+  <p class="muted">仅在点击开始后采集标签页音频。音频经本机服务发送至 Soniox，本项目不保存音频或字幕。服务商的数据处理以其条款为准。</p>
+  <a href="http://127.0.0.1:8787/" target="_blank" rel="noreferrer">打开默认本机控制台 ↗</a>
+</main><script type="module" src="options.js"></script></body></html>

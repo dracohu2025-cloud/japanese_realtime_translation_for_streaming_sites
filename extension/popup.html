@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>Kotoba Live</title><link rel="stylesheet" href="ui.css"></head>
+<body class="popup">
+  <div class="brand">ことば <span>Kotoba Live</span><span class="tag">0.1.5</span></div>
+  <p class="subtitle">听见日语，看懂每一句。</p>
+  <details class="pairing" id="pairingBox">
+    <summary>本机配对<small id="pairingSummary">未填写配对码</small></summary>
+    <label>配对码<small>本机中继的授权码，不是 Soniox API Key。可从本机服务读取，或手动粘贴。</small>
+      <input id="token" type="password" minlength="24" autocomplete="off" spellcheck="false" placeholder="至少 24 位">
+    </label>
+    <div class="pairing-actions">
+      <button type="button" class="secondary" id="fetchToken">从本机服务读取</button>
+      <button type="button" class="secondary" id="saveToken">保存</button>
+    </div>
+    <p class="hint" id="tokenFeedback" role="status"></p>
+  </details>
+  <div class="direction"><span>日本語 <small>JA</small></span><span>→</span><label class="language-label" for="targetLanguage">目标语言<select id="targetLanguage"><option value="zh">中文</option><option value="en">英语</option><option value="ko">韩语</option><option value="es">西班牙语</option><option value="fr">法语</option><option value="de">德语</option><option value="pt">葡萄牙语</option><option value="ru">俄语</option><option value="vi">越南语</option><option value="th">泰语</option><option value="id">印尼语</option></select></label></div>
+  <label class="check compact original-control"><input id="showOriginal" type="checkbox" checked><span>显示日文原文<small>关闭后只显示译文</small></span></label>
+  <label class="check compact"><input id="showSpeakers" type="checkbox" checked>显示说话人编号与颜色</label>
+  <label class="slider compact">字幕背景不透明度 <span id="opacityLabel">90%</span><input id="opacity" type="range" min="0" max="100" value="90"></label>
+  <div class="hint" id="speakerHint">编号仅区分声音，不代表身份；重连后重新编号。</div>
+  <div class="hint">原文开关立即生效；切换语言会短暂重连，费用继续累计。</div>
+  <p id="state" role="status">准备就绪</p><div id="meter"><span></span></div>
+  <div id="detail">打开有日语音频的网页，然后开始翻译。</div>
+  <button id="main">开始翻译当前标签页</button>
+  <section class="cost" aria-label="本次翻译费用">
+    <div><span>本次费用预估</span><strong id="estimate">—</strong></div>
+    <div><span id="actualLabel">Soniox 已归账</span><strong id="actual">等待记录</strong></div>
+    <p id="billingStatus" role="status">开始翻译后显示费用，单位 USD。</p>
+    <button class="secondary" id="refreshUsage">刷新归账</button>
+    <details><summary>预估与真实费用怎么算？</summary>
+      <p>预估按 stt-rt-v5（2026-09-07）价格：输入音频 $2/百万 token，输入及输出文字各 $4/百万 token。按每小时音频约 30,000 token、每字符约 0.3 token 换算；包含背景提示、日文转写和译文。它不是固定小时价，也不是扣款金额。</p>
+      <p>音频估算取已发送时长与连接时长的较大值，每秒更新。静音但保持连接仍累计；检测到暂停或拖动进度时断开连接，暂停期间冻结。恢复、换语言会新建一段连接并重新发送背景提示，本次各段费用累加。隐藏原文不减少转写费用。</p>
+      <p>真实金额来自 Soniox Usage Logs 的 cost_usd，按独立连接编号匹配、按记录 UUID 去重。请求结束后才可能出现记录，官方未承诺具体延迟；未出现不代表免费或零费用，失败请求也可能没有完整记录。</p>
+      <p>弹窗打开时最多每 15 秒查询一次；归账显示已匹配段数。预估覆盖全部段，已归账只含找到的段，两者不能相加。断线收尾、token 换算会产生差额，以供应商记录为准；这不是含税发票或信用余额实际扣减。</p>
+      <p>只展示本次或最近一次翻译，关闭 Chrome 后清除。再次开始会替换上一会话；历史账单请查看 Soniox 控制台。这里仅计 Soniox API 成本，不含服务器和其他服务费用。其他模型不提供价格预估。</p>
+      <p><a href="https://soniox.com/pricing" target="_blank" rel="noreferrer">官方价格</a> · <a href="https://soniox.com/docs/api-reference/other/get_usage_logs" target="_blank" rel="noreferrer">用量日志说明</a></p>
+    </details>
+  </section>
+  <div class="foot"><a href="options.html" id="settings">字幕与术语设置</a><span id="duration">本次 00:00</span></div>
+  <script type="module" src="popup.js"></script>
+</body></html>
