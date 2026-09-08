@@ -23,6 +23,7 @@ export async function initializeAccountUi(onChange) {
   const render = data => {
     $('loginForm').hidden = Boolean(data.user);
     $('signedIn').hidden = !data.user;
+    if ($('accountEntry')) bindText($('accountEntry'), () => data.user ? '我的账户' : '注册 / 登录');
     bindText($('accountEmail'), () => data.user?.email || '');
     $('connectionInfo').hidden = true;
     $('connectionToken').value = '';
@@ -44,6 +45,7 @@ export async function initializeAccountUi(onChange) {
     challenge = await createChallenge(config.turnstileSiteKey);
   }
   $('loginPanel').hidden = false;
+  if (location.hash === '#loginPanel') $('loginPanel').scrollIntoView({ block: 'start' });
   const cooldown = setInterval(updateResend, 1000);
   window.addEventListener('pagehide', () => clearInterval(cooldown), { once: true });
   async function action(fn) {

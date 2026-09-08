@@ -13,3 +13,24 @@ select:focus-visible{outline:2px solid #78905b;outline-offset:3px}
 .plan{padding-top:48px}.recommend{position:absolute;right:18px;top:12px;margin:0}
 .balance strong{overflow-wrap:anywhere}.preview{flex-wrap:wrap}
 @media(max-width:760px){header .ui-language{margin-left:auto}.hero h1{font-size:clamp(32px,8vw,48px)}.price strong{font-size:38px}}
+
+/* 首页安装引导：下载位于首屏，步骤先于账户与方案展示。 */
+.nav-install{font-weight:700;border-bottom:2px solid var(--green);padding-bottom:4px}
+.hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:18px;margin:26px 0 12px}
+.download-button{display:inline-flex;align-items:center;justify-content:center;background:var(--green);color:#fff;border-radius:8px;padding:17px 25px;font-size:15px;font-weight:600;line-height:1.5;transition:background .15s}
+.download-button:hover{background:#193d30}.guide-link{font-size:12px;line-height:1.7;text-decoration:underline;text-underline-offset:5px}
+.download-note{font-size:11px;line-height:1.8;color:var(--muted);margin:4px 0}
+.install-guide{scroll-margin-top:24px;background:#fafaf5;border:1px solid var(--line);border-radius:12px;padding:30px;margin-bottom:32px}
+.install-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-bottom:26px}.install-heading h2{margin:10px 0;font:500 28px/1.4 "Hiragino Mincho ProN","Songti SC",serif}.install-heading p:not(.eyebrow){font-size:12px;line-height:1.8;color:var(--muted);margin:0}.install-heading>.guide-link{flex-shrink:0}
+.install-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;margin:0;padding:0}.install-steps>li{min-width:0;padding:0 22px;border-left:1px solid var(--line)}.install-steps>li:first-child{border:0;padding-left:0}.install-steps>li:last-child{padding-right:0}.step-number{font:500 32px/1.2 "Baskerville","Times New Roman",serif;color:#7d906b}
+.install-guide h3{font-size:15px;line-height:1.5;font-weight:600;margin:12px 0}.install-steps p,.install-help p{font-size:12px;line-height:1.9;color:var(--muted);margin:10px 0}.install-steps .step-tip{font-size:11px;color:var(--ink)}.extension-address{display:block;background:#eaf0e3;border:1px solid var(--line);border-radius:5px;padding:9px 7px;font-size:11px;user-select:all;overflow-wrap:anywhere}
+.install-help{margin-top:26px;border-top:1px solid var(--line);border-bottom:0;padding:16px 0 0}.install-help-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}.install-help p{padding:0}.login-panel{scroll-margin-top:24px}
+@media(max-width:1000px){.install-steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 0}.install-steps>li:nth-child(3){border:0;padding-left:0}.install-steps>li:nth-child(2){padding-right:0}}
+@media(max-width:760px){.install-guide{padding:24px}.install-heading{display:block}.install-heading>.guide-link{display:inline-block;margin-top:14px}.install-heading h2{font-size:25px}.install-help-grid{grid-template-columns:1fr;gap:6px}.hero-actions{gap:14px}.download-button{width:100%}}
+@media(max-width:480px){.install-guide{padding:20px}.install-steps{grid-template-columns:1fr;gap:20px}.install-steps>li,.install-steps>li:first-child,.install-steps>li:nth-child(3){border:0;border-top:1px solid var(--line);padding:20px 0 0}.install-steps>li:first-child{padding-top:0;border:0}.extension-address{font-size:13px}}
+
+/* 右上角账户入口与按需展开的安装指南。 */
+header{display:grid;grid-template-columns:auto 1fr auto;gap:20px}header nav{justify-content:center;gap:20px}.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px}.header-actions .ui-language>span{display:none}.account-entry{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;background:var(--green);color:white;padding:11px 16px;border-radius:6px;font-size:12px;font-weight:600}.account-entry:hover{background:#193d30}
+.install-guide{padding:0}.install-toggle{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 26px;font-size:15px;font-weight:600;list-style:none}.install-toggle::-webkit-details-marker{display:none}.install-toggle-icon::before{content:'+';font-size:22px;font-weight:400}.install-guide[open]>.install-toggle .install-toggle-icon::before{content:'−'}.install-guide[open]>.install-toggle{border-bottom:1px solid var(--line)}.install-content{padding:26px 30px 30px}.install-guide p{padding-left:0}
+@media(max-width:1100px){header{grid-template-columns:1fr auto}header nav{grid-row:2;grid-column:1/-1;justify-content:flex-start}.header-actions{grid-row:1;grid-column:2}}
+@media(max-width:480px){header{column-gap:10px}.header-actions{gap:8px}.header-actions .ui-language select{max-width:108px}.account-entry{font-size:11px;padding:10px}.install-toggle{padding:17px 20px;font-size:14px}.install-content{padding:20px}}

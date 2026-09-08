@@ -1,5 +1,13 @@
 import { t, i18n, bindText, uiError } from './shared/ui-locale.js';
 const $ = id => document.getElementById(id);
+// 原生 details 默认折叠；指南入口和下载操作展开步骤，锚点仍使用浏览器导航。
+const installGuide = $('install');
+const openInstallGuide = () => { installGuide.open = true; };
+document.querySelectorAll('a[href="#install"], a[download]').forEach(link => link.addEventListener('click', openInstallGuide));
+const followInstallHash = () => { if (location.hash === '#install') openInstallGuide(); };
+window.addEventListener('hashchange', followInstallHash);
+followInstallHash();
+
 const buttons = [...document.querySelectorAll('[data-plan]')];
 let production = false;
 let canPurchase = true;
