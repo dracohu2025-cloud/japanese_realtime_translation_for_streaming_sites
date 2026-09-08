@@ -1,6 +1,15 @@
 // 简体中文源文为消息键；新增文案须同时提供英文。仅包含产品文案。
 (() => {
   globalThis.KotobaMessages = {
+  "Kotoba Live · 日语实时字幕 Chrome 插件": "Kotoba Live · Real-time Japanese captions for Chrome",
+  "Kotoba Live 是 Chrome 扩展，把当前标签页里的日语音频转成实时字幕。支持日语到英文或简体中文，适用于课程、访谈、直播和其他在浏览器中播放的日语内容。": "Kotoba Live is a Chrome extension that turns Japanese audio in the current tab into live captions. Translate Japanese to English or Simplified Chinese on courses, talks, livestreams, and other pages that play audio in the browser.",
+  "Kotoba Live 的服务、退款、隐私与安装说明。由 DracoNova Inc 运营。": "Terms, refunds, privacy, and installation for Kotoba Live. Operated by DracoNova Inc.",
+  "在 Chrome 里，给日语视频加实时字幕。": "Live Japanese captions in Chrome.",
+  "Kotoba Live 是一款 Chrome 扩展。打开任意正在播放日语的网页，它采集当前标签页的声音，生成可拖动的实时字幕。目标语言可选英文或简体中文，原声始终保留。": "Kotoba Live is a Chrome extension. Open any page playing Japanese, and it captures the current tab’s audio to show live, draggable subtitles. Target language can be English or Simplified Chinese. Original audio stays on.",
+  "采集当前标签页音频，不解析网站的视频文件": "Captures current-tab audio; does not parse a site’s video files",
+  "日语可译成英文或简体中文，并可对照原文": "Japanese to English or Simplified Chinese, with optional original text",
+  "适用于课程、访谈、直播，以及浏览器中其他正在播放日语的页面": "For courses, talks, livestreams, and other pages that play Japanese audio in the browser",
+
   "下载、安装与使用指南": "Download, installation & usage guide",
   "注册 / 登录": "Sign up / Sign in",
   "我的账户": "My account",

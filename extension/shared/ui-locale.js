@@ -45,6 +45,10 @@ for (const element of document.querySelectorAll('[title], [aria-label], [placeho
     if (source && Object.hasOwn(globalThis.KotobaMessages, source)) attributes.push([element, attr, source]);
   }
 }
+for (const element of document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"], meta[name="twitter:title"], meta[name="twitter:description"]')) {
+  const source = element.getAttribute('content');
+  if (source && Object.hasOwn(globalThis.KotobaMessages, source)) attributes.push([element, 'content', source]);
+}
 const normalizePreference = value => ['zh-CN', 'en'].includes(value) ? value : 'auto';
 async function setPreference(value) {
   preference = normalizePreference(value);

@@ -42,6 +42,20 @@ const call = (path, data, extra = {}) => mf.dispatchFetch(origin + path, {
   ...(data ? { body: JSON.stringify(production && path.includes('send-verification-otp') ? { challengeToken: 'valid-fixture', ...data } : data) } : {}),
 });
 try {
+  const robots = await call('/robots.txt');
+  assert.equal(robots.status, 200);
+  const robotsBody = await robots.text();
+  if (production) {
+    assert.match(robotsBody, /Allow: \//);
+    assert.match(robotsBody, /ai-input=yes/);
+    assert.equal((await call('/sitemap.xml')).status, 200);
+  } else {
+    assert.match(robotsBody, /Disallow: \//);
+    assert.equal((await call('/sitemap.xml')).status, 404);
+  }
+  const llms = await (await call('/llms.txt')).text();
+  assert.match(llms, /Kotoba Live/);
+  assert.doesNotMatch(llms, /missav/i);
   assert.equal((await call('/api/account')).status, 200);
   assert.equal((await call('/api/account/test-code')).status, 404);
   assert.equal((await call('/api/payments/trial', {})).status, 401);

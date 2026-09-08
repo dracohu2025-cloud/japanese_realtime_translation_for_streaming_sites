@@ -8,6 +8,7 @@ import { AppError } from '../server/config.js';
 import { cloudDatabase } from './database.js';
 import { openStream } from './stream.js';
 import { publicAccess } from './public-access.js';
+import { discovery } from './seo.js';
 
 const headers = {
   'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
@@ -40,10 +41,14 @@ export default {
     if (url.pathname.startsWith('/api/') || url.pathname === '/stream') return env.BETA.get(env.BETA.idFromName(env.PAYMENT_MODE === 'live' ? 'production-v1' : 'closed-beta-v1')).fetch(request);
     if (url.pathname === '/health') return json({ ok: true, environment: env.PAYMENT_MODE === 'live' ? 'production' : 'cloud-beta', payments: env.PAYMENT_MODE === 'live' ? 'stripe-live' : 'stripe-test' });
     if (!['GET', 'HEAD'].includes(request.method)) return json({ code: 'METHOD' }, 405);
+    const found = discovery(url, env);
+    if (found) return new Response(found.body, { status: found.status || 200, headers: { ...headers, 'Content-Type': found.type, 'Cache-Control': 'public, max-age=3600' } });
     const path = url.pathname === '/' || url.pathname === '/pricing' ? '/pricing.html' : url.pathname;
     if (!['/pricing.html', '/pricing.css', '/pricing.js', '/account.js', '/challenge.js', '/production-copy.js', '/policies.html', '/downloads/kotoba-live.zip', '/shared/messages.js', '/shared/i18n-core.js', '/shared/i18n.js', '/shared/ui-locale.js'].includes(path)) return json({ code: 'NOT_FOUND' }, 404);
     url.pathname = path;
-    return secure(await env.ASSETS.fetch(new Request(url, request)));
+    const page = secure(await env.ASSETS.fetch(new Request(url, request)));
+    if (env.PAYMENT_MODE !== 'live') page.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return page;
   },
 };
 

@@ -32,7 +32,7 @@ test('英文资源保留全部命名参数，三处用户页面的静态中文�
   }
   for (const file of ['extension/popup.html','extension/options.html','web/pricing.html']) {
     const html = await readFile(file,'utf8');
-    const text = [...html.matchAll(/>([^<>]+)</g), ...html.matchAll(/(?:title|aria-label|placeholder)="([^"]+)"/g)];
+    const text = [...html.matchAll(/>([^<>]+)</g), ...html.matchAll(/(?:title|aria-label|placeholder|content)="([^"]+)"/g)];
     for (const [, raw] of text) {
       const key = raw.trim();
       if (/[\p{Script=Han}]/u.test(key) && key !== '简体中文' && !key.startsWith('ことば')) assert(Object.hasOwn(messages,key), `${file}: ${key}`);
