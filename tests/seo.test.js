@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { robotsTxt, sitemapXml, llmsTxt, discovery } from '../cloud/seo.js';
+import { robotsTxt, sitemapXml, llmsTxt, discovery, canonicalLocation } from '../cloud/seo.js';
 
 const origin = 'https://kotoba.uk';
 
@@ -23,4 +23,12 @@ test('站点地图只列出可索引页面，说明书可供模型引用且不�
   assert.match(llms, /tab/);
   assert.doesNotMatch(llms, /missav|jav|porn|adult/i);
   assert.equal(discovery(new URL(origin + '/llms.txt'), { PUBLIC_ORIGIN: origin, PAYMENT_MODE: 'live' }).type, 'text/plain; charset=utf-8');
+});
+
+test('http 与 www 归一到正式 https 域名，其它来源不改写', () => {
+  assert.equal(canonicalLocation('http://kotoba.uk/', origin), 'https://kotoba.uk/');
+  assert.equal(canonicalLocation('http://kotoba.uk/policies.html?x=1', origin), 'https://kotoba.uk/policies.html?x=1');
+  assert.equal(canonicalLocation('https://www.kotoba.uk/llms.txt', origin), 'https://kotoba.uk/llms.txt');
+  assert.equal(canonicalLocation('https://kotoba.uk/robots.txt', origin), undefined);
+  assert.equal(canonicalLocation('https://evil.test/', origin), undefined);
 });

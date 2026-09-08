@@ -13,6 +13,10 @@
     {
       "pattern": "kotoba.uk",
       "custom_domain": true
+    },
+    {
+      "pattern": "www.kotoba.uk",
+      "custom_domain": true
     }
   ],
   "assets": {
@@ -57,6 +61,7 @@
     "SONIOX_MODEL": "stt-rt-v5",
     "TURNSTILE_SITE_KEY": "0x4AAAAAAEsXE3a83Ia0Hc0j",
     "STRIPE_MONTHLY_PRICE": "price_1UDHYYGDmcxGUUz4TzfGWkwu",
-    "STRIPE_TOPUP_PRICE": "price_1UDHYZGDmcxGUUz4af2stGEt"
+    "STRIPE_TOPUP_PRICE": "price_1UDHYZGDmcxGUUz4af2stGEt",
+    "STRIPE_MONTHPASS_PRICE": "price_1UDLI7GDmcxGUUz4G9sHPuCi"
   }
 }

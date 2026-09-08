@@ -48,6 +48,17 @@ Kotoba Live (ことば) is a desktop Chrome extension operated by DracoNova Inc.
 `;
 }
 
+export function canonicalLocation(requestUrl, publicOrigin) {
+  if (!publicOrigin) return;
+  const url = new URL(requestUrl);
+  const canonical = new URL(publicOrigin);
+  const host = url.hostname.toLowerCase();
+  const apex = canonical.hostname.toLowerCase();
+  if (host !== apex && host !== `www.${apex}`) return;
+  if (url.origin === canonical.origin) return;
+  return canonical.origin + url.pathname + url.search;
+}
+
 export function discovery(url, env) {
   const origin = env.PUBLIC_ORIGIN;
   const live = env.PAYMENT_MODE === 'live';

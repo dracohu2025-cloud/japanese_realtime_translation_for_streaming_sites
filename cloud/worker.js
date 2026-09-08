@@ -8,7 +8,7 @@ import { AppError } from '../server/config.js';
 import { cloudDatabase } from './database.js';
 import { openStream } from './stream.js';
 import { publicAccess } from './public-access.js';
-import { discovery } from './seo.js';
+import { canonicalLocation, discovery } from './seo.js';
 
 const headers = {
   'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
@@ -37,6 +37,8 @@ async function body(request, limit) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const canonical = canonicalLocation(request.url, env.PUBLIC_ORIGIN);
+    if (canonical) return Response.redirect(canonical, 301);
     if (!env.PUBLIC_ORIGIN || url.origin !== env.PUBLIC_ORIGIN) return json({ code: 'NOT_CONFIGURED' }, 503);
     if (url.pathname.startsWith('/api/') || url.pathname === '/stream') return env.BETA.get(env.BETA.idFromName(env.PAYMENT_MODE === 'live' ? 'production-v1' : 'closed-beta-v1')).fetch(request);
     if (url.pathname === '/health') return json({ ok: true, environment: env.PAYMENT_MODE === 'live' ? 'production' : 'cloud-beta', payments: env.PAYMENT_MODE === 'live' ? 'stripe-live' : 'stripe-test' });
@@ -65,7 +67,7 @@ export class KotobaBeta extends DurableObject {
       this.access = publicAccess(database, env);
       const stripe = new Stripe(env.STRIPE_SECRET_KEY, { httpClient: Stripe.createFetchHttpClient(), maxNetworkRetries: 1, timeout: 10_000 });
       this.billing = createAccountPayments({ database, stripe, key: env.STRIPE_SECRET_KEY, webhookSecret: env.STRIPE_WEBHOOK_SECRET,
-        prices: { monthly: env.STRIPE_MONTHLY_PRICE, topup: env.STRIPE_TOPUP_PRICE }, baseUrl: env.PUBLIC_ORIGIN, mode: env.PAYMENT_MODE || 'test' });
+        prices: { monthly: env.STRIPE_MONTHLY_PRICE, topup: env.STRIPE_TOPUP_PRICE, monthpass: env.STRIPE_MONTHPASS_PRICE }, baseUrl: env.PUBLIC_ORIGIN, mode: env.PAYMENT_MODE || 'test' });
       const initialize = !database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'user'").get();
       this.accounts = await createAccounts({ database, authDatabase, baseUrl: env.PUBLIC_ORIGIN, secret: env.BETTER_AUTH_SECRET, billing: this.billing,
         sendOTP: createEmailSender(env), initialize });
@@ -123,14 +125,14 @@ export class KotobaBeta extends DurableObject {
         return json({ user, developmentInbox: false, googleEnabled: false, cloudBeta: !this.live, production: this.live, turnstileSiteKey: this.publicRegistration ? this.env.TURNSTILE_SITE_KEY : undefined });
       }
       if (path === '/api/account/connection' && request.method === 'POST') return json({ ...await this.accounts.issueToken(req), relayUrl: origin.replace(/^http/, 'ws') + '/stream' });
-      if (path === '/api/plans' && request.method === 'GET') return json({ plans, accountsEnabled: true, testPaymentsAvailable: !this.live, paymentsAvailable: this.env.PAYMENTS_ENABLED !== 'false', production: this.live, cloudBeta: !this.live });
+      if (path === '/api/plans' && request.method === 'GET') return json({ plans, walletPaymentsAvailable: Boolean(this.env.STRIPE_MONTHPASS_PRICE) && this.env.PAYMENTS_ENABLED !== 'false', accountsEnabled: true, testPaymentsAvailable: !this.live, paymentsAvailable: this.env.PAYMENTS_ENABLED !== 'false', production: this.live, cloudBeta: !this.live });
       if (path === '/api/payments' || ['/api/payments/trial', '/api/payments/checkout', '/api/payments/cancel', '/api/payments/reconcile'].includes(path)) {
         const payments = await this.accounts.payments(req);
         if (path === '/api/payments' && request.method === 'GET') return json(await payments.status());
         if (request.method !== 'POST') throw new AppError('METHOD', '请求方法不支持', 405);
         const input = JSON.parse(await body(request, 4096) || '{}');
         if (path.endsWith('/checkout') && this.env.PAYMENTS_ENABLED === 'false') throw new AppError('UNAVAILABLE', '付款暂未开放，请稍后重试', 503);
-        if (path.endsWith('/checkout')) return json(await payments.checkout(input.plan));
+        if (path.endsWith('/checkout')) return json(await payments.checkout(input.plan, input.paymentMethod));
         if (path.endsWith('/trial')) {
           if (this.publicRegistration && !(await payments.status()).trialClaimed) this.access.reserve(request, 'trial', 3, 86400_000);
           await payments.trial();
