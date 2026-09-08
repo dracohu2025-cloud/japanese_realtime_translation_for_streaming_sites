@@ -1,8 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Kotoba Live · 日语实时字幕",
-  "version": "0.1.5",
-  "description": "为当前标签页的日语音频提供实时翻译字幕。支持目标语言选择、双语显示、字幕拖动与 API 费用预估及归账查询。",
+  "name": "__MSG_extensionName__",
+  "version": "0.1.16",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "description": "__MSG_extensionDescription__",
   "minimum_chrome_version": "116",
   "permissions": [
     "activeTab",
@@ -16,11 +22,18 @@
     "type": "module"
   },
   "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
     "default_popup": "popup.html",
-    "default_title": "日语实时字幕"
+    "default_title": "__MSG_actionTitle__"
   },
   "options_page": "options.html",
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'; connect-src ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:*"
-  }
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:* wss://kotoba-beta.dracohu2025.workers.dev"
+  },
+  "default_locale": "en"
 }

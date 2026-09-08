@@ -22,4 +22,6 @@ Soniox 日志按请求结束时间查询。请求结束后才可能出现，未�
 
 当前只保留本次或最近一次会话的临时元数据。开始下一次会覆盖显示，关闭 Chrome 或重新加载扩展会清除。历史金额请使用 Soniox 控制台。此功能没有向用户收费或扣额度。
 
+另有独立的 [收费内测方案](monetization-v1.md) 与 Stripe 本机测试页面，用于验证购买后的测试额度发放。该测试账本尚未接入本页描述的音频会话，不能将供应商成本显示当作用户额度扣减。
+
 来源：[官方价格](https://soniox.com/pricing)、[用量日志 API](https://soniox.com/docs/api-reference/other/get_usage_logs)、[关联请求编号](https://soniox.com/docs/guides/usage-logs)。

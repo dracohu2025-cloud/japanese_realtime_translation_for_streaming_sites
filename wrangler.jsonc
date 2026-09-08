@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kotoba-beta",
+  "account_id": "678302f2d4c832a5582c776b397eed2a",
+  "main": "cloud/worker.js",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": { "directory": "output/cloud-assets", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" },
+  "durable_objects": { "bindings": [{ "name": "BETA", "class_name": "KotobaBeta" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["KotobaBeta"] }],
+  "observability": { "enabled": false },
+  "vars": {
+    "PUBLIC_ORIGIN": "https://kotoba-beta.dracohu2025.workers.dev",
+    "KOTOBA_EMAIL_FROM": "login@aigc.green",
+    "SONIOX_MODEL": "stt-rt-v5",
+    "BETA_EMAILS": "dracohu2025@gmail.com",
+    "STRIPE_MONTHLY_PRICE": "price_1UCwIzGDmcxGUUz4K1fjQ6un",
+    "STRIPE_TOPUP_PRICE": "price_1UCwJ0GDmcxGUUz4U81bkswW"
+  }
+}

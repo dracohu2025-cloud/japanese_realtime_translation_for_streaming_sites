@@ -6,3 +6,6 @@ dist/
 output/
 .playwright-cli/
 .DS_Store
+.dev.vars
+.dev.vars.*
+.wrangler/

@@ -1,0 +1,62 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kotoba-live",
+  "account_id": "678302f2d4c832a5582c776b397eed2a",
+  "main": "cloud/worker.js",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "kotoba.uk",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "output/cloud-assets-production",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BETA",
+        "class_name": "KotobaBeta"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "KotobaBeta"
+      ]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": false
+    }
+  },
+  "vars": {
+    "PUBLIC_ORIGIN": "https://kotoba.uk",
+    "PAYMENT_MODE": "live",
+    "PAYMENTS_ENABLED": "true",
+    "REGISTRATION_MODE": "public",
+    "MAX_STREAMS": "10",
+    "LEGAL_ENTITY": "DracoNova Inc",
+    "SUPPORT_EMAIL": "support@kotoba.uk",
+    "KOTOBA_EMAIL_FROM": "login@aigc.green",
+    "SONIOX_MODEL": "stt-rt-v5",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAEsXE3a83Ia0Hc0j",
+    "STRIPE_MONTHLY_PRICE": "price_1UDHYYGDmcxGUUz4TzfGWkwu",
+    "STRIPE_TOPUP_PRICE": "price_1UDHYZGDmcxGUUz4af2stGEt"
+  }
+}

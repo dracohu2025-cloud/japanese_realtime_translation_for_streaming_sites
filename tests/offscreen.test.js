@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
+import { validateRelay } from '../extension/shared/relay.js';
 import { CaptionBuffer } from '../extension/shared/captions.js';
 import { estimateBilling, countTokenCharacters } from '../extension/shared/billing.js';
 
@@ -27,7 +28,7 @@ test('原文开关不重连，语言切换与暂停恢复新建分段，停止�
   const chrome = { runtime: { id: 'test', async sendMessage(value) { updates.push(value); }, onMessage: { addListener(fn) { listener = fn; } } } };
   const source = (await readFile(new URL('../extension/offscreen.js', import.meta.url), 'utf8')).replace(/^import .*;\n/gm, '');
   vm.runInNewContext(source, {
-    chrome, CaptionBuffer, estimateBilling, countTokenCharacters, URL, WebSocket: Socket, AudioContext: Context,
+    chrome, validateRelay, CaptionBuffer, estimateBilling, countTokenCharacters, URL, WebSocket: Socket, AudioContext: Context,
     AudioWorkletNode: class { port = {}; disconnect() {} },
     navigator: { mediaDevices: { async getUserMedia() { return { getTracks: () => [track], getAudioTracks: () => [track] }; } } },
     setTimeout() {}, clearTimeout() {}, performance: { now: () => 0 },
@@ -54,8 +55,23 @@ test('原文开关不重连，语言切换与暂停恢复新建分段，停止�
   await send({ type: 'resume' });
   ready(sockets[2], 'third');
   assert.equal(sockets[2].sent[0].targetLanguage, 'ko');
+  sockets[2].onmessage({ data: JSON.stringify({ type: 'quota', remainingSeconds: 1199.5 }) });
+  assert.equal(updates.at(-1).state.remainingSeconds, 1199.5);
+  sockets[2].onmessage({ data: JSON.stringify({ type: 'quota', remainingSeconds: -1 }) });
+  assert.equal(updates.at(-1).state.remainingSeconds, 1199.5);
+  sockets[2].onmessage({ data: JSON.stringify({ type: 'quota', remainingSeconds: 0 }) });
+  assert.equal(updates.at(-1).state.remainingSeconds, 0);
   const stopped = await send({ type: 'stop' });
   assert.equal(stopped.billing.segments.length, 3);
   assert(stopped.billing.segments.every(s => s.endedAt));
   assert(!JSON.stringify(stopped.billing).includes('fake'));
+  await send({ type: 'start', settings: { relayUrl: 'ws://localhost:8787/stream', token: 'fake', terms: '', context: '', targetLanguage: 'zh' } });
+  ready(sockets[3], 'failure');
+  sockets[3].onmessage({ data: JSON.stringify({ type: 'error', code: 'UPSTREAM_CLOSED', message: 'private provider detail' }) });
+  await new Promise(resolve => setImmediate(resolve));
+  const failure = updates.filter(update => update.state?.status === 'error').at(-1).state;
+  assert.equal(failure.errorCode, 'UPSTREAM_CLOSED');
+  assert.equal(failure.message, '翻译服务连接已断开，请重新开始翻译。');
+  assert.equal(sockets[3].readyState, 3);
+  assert(!JSON.stringify(updates).includes('private provider detail'));
 });

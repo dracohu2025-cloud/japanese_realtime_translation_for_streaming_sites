@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "Kotoba Live · Japanese Subtitles"
+  },
+  "extensionDescription": {
+    "message": "Live translated subtitles for Japanese audio in your current tab. Choose languages, show bilingual text, identify speakers, and move or resize subtitles."
+  },
+  "actionTitle": {
+    "message": "Japanese live subtitles"
+  }
+}

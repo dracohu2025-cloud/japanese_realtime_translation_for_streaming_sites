@@ -1,3 +1,8 @@
+import { resolveLocale, messages } from './shared/i18n.js';
+import { registerPinGuide } from './shared/pin-guide.js';
+registerPinGuide(chrome);
+import { cloudRelay, validateRelay } from './shared/relay.js';
+const publicError = error => Object.hasOwn(messages, error?.message) ? error.message : '操作未成功，请稍后重试。';
 let creating;
 let starting = false;
 const state = async () => (await chrome.storage.session.get('session')).session || { status: 'idle' };
@@ -27,13 +32,14 @@ async function start(tabId) {
   try {
     const tab = await chrome.tabs.get(tabId);
     if (!/^https?:\/\//.test(tab.url || '')) throw new Error('请在普通网页的视频标签页开启字幕');
-    const settings = await chrome.storage.local.get({ relayUrl: 'ws://127.0.0.1:8787/stream', token: '', context: '', terms: '', showOriginal: true, fontSize: 28, opacity: 90, targetLanguage: 'zh', showSpeakers: true });
-    if (!settings.token) throw new Error('请先在插件窗口填写本机配对码');
+    const settings = await chrome.storage.local.get({ relayUrl: cloudRelay, token: '', context: '', terms: '', showOriginal: true, fontSize: 28, opacity: 90, targetLanguage: 'zh', showSpeakers: true, uiLanguage: 'auto' });
+    validateRelay(settings.relayUrl);
+    if (!settings.token) throw new Error('请先连接 Kotoba 账户：在弹窗中获取并保存连接码');
     await stop();
     id = crypto.randomUUID();
     await save({ id, tabId, tabTitle: tab.title || '已选择的页面', status: 'connecting', audioSeconds: 0, targetLanguage: settings.targetLanguage });
-    await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
-    await chrome.tabs.sendMessage(tabId, { type: 'KOTOBA_CONFIG', settings: { showOriginal: settings.showOriginal, showSpeakers: settings.showSpeakers, fontSize: settings.fontSize, opacity: settings.opacity } });
+    await chrome.scripting.executeScript({ target: { tabId }, files: ['shared/messages.js', 'shared/i18n-core.js', 'content.js'] });
+    await chrome.tabs.sendMessage(tabId, { type: 'KOTOBA_CONFIG', settings: { targetLanguage: settings.targetLanguage, uiLocale: resolveLocale(settings.uiLanguage, [chrome.i18n?.getUILanguage() || 'en']), showOriginal: settings.showOriginal, showSpeakers: settings.showSpeakers, fontSize: settings.fontSize, opacity: settings.opacity } });
     await offscreen();
     const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
     const result = await chrome.runtime.sendMessage({ target: 'offscreen', type: 'start', id, tabId, streamId, settings });
@@ -42,7 +48,7 @@ async function start(tabId) {
   } catch (error) {
     if (!id || (await state()).id === id) {
       await stop();
-      await save({ status: 'error', message: error.message });
+      await save({ status: 'error', message: publicError(error) });
     }
     throw error;
   } finally { starting = false; }
@@ -113,7 +119,7 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
       }
     }
   };
-  run().then(result => reply(result || { ok: true }), error => reply({ ok: false, error: error.message }));
+  run().then(result => reply(result || { ok: true }), error => reply({ ok: false, error: publicError(error) }));
   return true;
 });
 chrome.tabs.onRemoved.addListener(async tabId => { if ((await state()).tabId === tabId) await stop(); });
@@ -130,9 +136,9 @@ async function usage() {
     if (Date.now() - (current.usageAttemptAt || 0) < 15_000) return { ok: true };
     await save({ ...current, usageAttemptAt: Date.now() });
     try {
-      const settings = await chrome.storage.local.get({ relayUrl: 'ws://127.0.0.1:8787/stream', token: '' });
+      const settings = await chrome.storage.local.get({ relayUrl: cloudRelay, token: '' });
       const result = await new Promise((resolve, reject) => {
-        const socket = new WebSocket(settings.relayUrl);
+        const socket = new WebSocket(validateRelay(settings.relayUrl));
         let timer;
         const finish = (error, value) => { clearTimeout(timer); socket.onclose = null; socket.close(); error ? reject(error) : resolve(value); };
         timer = setTimeout(() => finish(new Error('费用查询超时，请稍后重试')), 20_000);
@@ -154,3 +160,12 @@ async function usage() {
   })().finally(() => { usagePending = null; });
   return usagePending;
 }
+
+// 只更新界面文字；不重连音频、不改变字幕目标语言。
+chrome.storage.onChanged?.addListener(async (changes, area) => {
+  if (area !== 'local' || !changes.uiLanguage) return;
+  const current = await state();
+  if (current.tabId && ['connecting', 'listening', 'paused'].includes(current.status)) {
+    await chrome.tabs.sendMessage(current.tabId, { type: 'KOTOBA_SETTINGS', settings: { uiLocale: resolveLocale(changes.uiLanguage.newValue, [chrome.i18n?.getUILanguage() || 'en']) } }).catch(() => {});
+  }
+});

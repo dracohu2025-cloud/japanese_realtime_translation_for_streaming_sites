@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { createAccountPayments } from '../server/account-payments.js';
+import { createQuota } from '../server/quota.js';
+import { publicAccess } from '../cloud/public-access.js';
+test('正式与测试账本不共享客户、试用或时长', async () => {
+  const database = new DatabaseSync(':memory:');
+  const config = { database, stripe: {}, webhookSecret: 'whsec_fixture', prices: {}, baseUrl: 'https://kotoba.test' };
+  const beta = createAccountPayments({ ...config, key: 'sk_test_fixture' }).forUser('same-user');
+  const live = createAccountPayments({ ...config, key: 'sk_live_fixture', mode: 'live' }).forUser('same-user');
+  await beta.payments.trial();
+  assert.equal((await beta.payments.status()).seconds, 1200);
+  assert.equal((await live.payments.status()).seconds, 0);
+  await live.payments.trial();
+  assert.notEqual(beta.store.snapshot().instance, live.store.snapshot().instance);
+  database.close();
+});
+test('故障仅退未确认音频，重复结束不重复补时；重建恢复未结束会话', async () => {
+  let value = { grants: [{ id: 'trial', kind: 'trial', seconds: 60, startsAt: 0 }] };
+  const store = { snapshot: () => structuredClone(value), async transact(fn) { const draft = structuredClone(value); const result = await fn(draft); value = draft; return result; } };
+  const quota = createQuota(store);
+  await quota.start('s');
+  await quota.write('s', 0, Buffer.alloc(16000), () => true, 0);
+  await quota.write('s', 1, Buffer.alloc(16000), () => true, 8000);
+  await quota.stop('s', { compensate: true, confirmedSamples: 8000 });
+  assert.equal(value.grants[0].usedSamples, 8000);
+  await quota.stop('s', { compensate: true, confirmedSamples: 0 });
+  assert.equal(value.grants[0].usedSamples, 8000);
+  await quota.start('crash');
+  await quota.write('crash', 0, Buffer.alloc(16000), () => true, 0);
+  await createQuota(store).start('recovered');
+  assert.equal(value.grants[0].usedSamples, 8000);
+  assert.equal(value.audioSessions.find(s => s.id === 'crash').recovered, true);
+});
+test('公开限频按来源持久化，过期可恢复且不保存明文 IP', async () => {
+  const db = new DatabaseSync(':memory:');
+  let now = 1000;
+  const database = { exec: sql => db.exec(sql), prepare: sql => db.prepare(sql), transactionSync(fn) { db.exec('BEGIN'); try { const r = fn(); db.exec('COMMIT'); return r; } catch(e) { db.exec('ROLLBACK'); throw e; } } };
+  const env = { BETTER_AUTH_SECRET: 'private-limit-salt' };
+  const request = new Request('https://kotoba.test', { headers: { 'CF-Connecting-IP': '192.0.2.1' } });
+  const access = publicAccess(database, env, () => now);
+  access.reserve(request, 'trial', 1, 1000);
+  assert.throws(() => publicAccess(database, env, () => now).reserve(request, 'trial', 1, 1000));
+  assert(!JSON.stringify(db.prepare('SELECT * FROM kotoba_public_limits').all()).includes('192.0.2.1'));
+  now = 2001; access.reserve(request, 'trial', 1, 1000);
+  db.close();
+});

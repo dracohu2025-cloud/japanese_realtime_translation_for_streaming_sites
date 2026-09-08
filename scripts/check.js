@@ -9,7 +9,7 @@ async function walk(directory) {
     else if (file.name.endsWith('.js')) execFileSync(process.execPath, ['--check', path]);
   }
 }
-for (const folder of ['extension', 'server', 'web', 'scripts', 'tests', 'electron']) await walk(folder);
+for (const folder of ['extension', 'server', 'web', 'scripts', 'tests', 'electron', 'cloud']) await walk(folder);
 const manifest = JSON.parse(await readFile('extension/manifest.json', 'utf8'));
 assert.equal(manifest.manifest_version, 3);
 for (const file of [manifest.background.service_worker, manifest.action.default_popup, manifest.options_page]) await readFile(`extension/${file}`);

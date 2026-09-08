@@ -56,9 +56,10 @@ export function connectSoniox(config, options, emit, endpoint = 'wss://stt-rt.so
   return {
     ready,
     write(data) {
-      if (socket.readyState !== WebSocket.OPEN || ended) return;
+      if (socket.readyState !== WebSocket.OPEN || ended) return false;
       if (socket.bufferedAmount > 256_000) throw new AppError('SLOW_NETWORK', '网络无法跟上播放速度，会话已停止', 503);
       socket.send(data, { binary: true });
+      return true;
     },
     finish() {
       if (ended) return;

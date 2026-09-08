@@ -1,3 +1,4 @@
+import { validateRelay } from './shared/relay.js';
 import { CaptionBuffer } from './shared/captions.js';
 import { estimateBilling, countTokenCharacters } from './shared/billing.js';
 
@@ -5,9 +6,9 @@ const billing = s => ({ segments: s.segments, estimateUsd: estimateBilling(s.seg
 
 let session;
 const post = (s, payload) => chrome.runtime.sendMessage({ type: 'OFFSCREEN_UPDATE', id: s.id, ...payload }).catch(() => {});
-const status = (s, value, message = '') => {
+const status = (s, value, message = '', errorCode = '') => {
   s.status = value;
-  return post(s, { state: { status: value, message, speakerEpoch: s.segments.length, audioSeconds: Math.round(s.audioSeconds || 0), billing: billing(s) } });
+  return post(s, { state: { status: value, message, errorCode, speakerEpoch: s.segments.length, audioSeconds: Math.round(s.audioSeconds || 0), billing: billing(s), remainingSeconds: s.remainingSeconds } });
 };
 
 function disconnect(s) {
@@ -32,10 +33,10 @@ async function dispose(s) {
   if (session === s) session = null;
 }
 
-async function fail(s, message) {
+async function fail(s, message, errorCode = '') {
   if (session !== s) return;
   await dispose(s);
-  await status(s, 'error', message);
+  await status(s, 'error', message, errorCode);
 }
 
 function connect(s) {
@@ -47,7 +48,7 @@ function connect(s) {
   const socket = new WebSocket(s.settings.relayUrl);
   s.socket = socket;
   const current = () => session === s && s.generation === generation;
-  s.connectTimer = setTimeout(() => { if (current()) fail(s, '连接超时，请检查本机服务是否启动'); }, 12_000);
+  s.connectTimer = setTimeout(() => { if (current()) fail(s, '连接超时，请检查网络后重试'); }, 12_000);
   socket.onopen = () => {
     if (!current()) { socket.close(); return; }
     socket.send(JSON.stringify({ type: 'start', token: s.settings.token, speakerDiarization: true, targetLanguage: s.settings.targetLanguage || 'zh', context: s.settings.context, terms: s.settings.terms.split(/[,，\n]/).map(x => x.trim()).filter(Boolean) }));
@@ -66,17 +67,42 @@ function connect(s) {
         if (s.segments.length) countTokenCharacters(s.segments.at(-1), data.tokens);
         post(s, { captions: { ...s.captions.push(data.tokens), speakerEpoch: s.segments.length } });
       }
-      else if (data.type === 'error') fail(s, data.message || '翻译服务发生错误');
+      else if (data.type === 'quota' && Number.isFinite(data.remainingSeconds) && data.remainingSeconds >= 0) {
+        const first = s.remainingSeconds === undefined;
+        s.remainingSeconds = data.remainingSeconds;
+        if (first || data.remainingSeconds === 0 || Date.now() - (s.lastQuotaUpdate || 0) >= 1000) {
+          s.lastQuotaUpdate = Date.now();
+          post(s, { state: { remainingSeconds: s.remainingSeconds } });
+        }
+      }
+      else if (data.type === 'error') {
+        const messages = {
+          LOGIN_REQUIRED: '连接码已失效，请在账户页重新获取并保存。',
+          AUTH: '请在账户页重新获取连接码并保存。',
+          QUOTA_EXHAUSTED: '可用时长已用完，请前往账户页领取试用或购买时长；不会自动加购。',
+          SESSION_ACTIVE: '此账户正在另一处翻译，请先停止另一处翻译。',
+          TIME_LIMIT: '本次翻译已达一小时，请重新开始。',
+          AUDIO_TIMEOUT: '暂未收到声音，请确认视频正在播放，然后重新开始。',
+          UPSTREAM_CONNECT: '翻译服务暂时无法连接，请稍后重新开始。',
+          UPSTREAM_CLOSED: '翻译服务连接已断开，请重新开始翻译。',
+          PROVIDER_NETWORK: '翻译服务连接已断开，请重新开始翻译。',
+          PROVIDER_ERROR: '翻译服务暂时无法处理音频，请稍后重试。',
+          RATE_LIMIT: '音频传输速度异常，请重新开始翻译。',
+          TOO_LARGE: '音频传输出现积压，请检查网络后重新开始。',
+        };
+        const errorCode = typeof data.code === 'string' && /^[A-Z_]{1,40}$/.test(data.code) ? data.code : 'UNKNOWN';
+        fail(s, messages[errorCode] || '翻译暂时中断，请稍后重新开始。', errorCode);
+      }
     } catch { fail(s, '收到无法识别的字幕数据'); }
   };
-  socket.onerror = () => { if (current()) fail(s, '无法连接本机服务，请确认服务地址与启动状态'); };
+  socket.onerror = () => { if (current()) fail(s, '暂时无法连接翻译服务，请检查网络后重试'); };
   socket.onclose = () => { if (current()) fail(s, '翻译连接已断开，点击重新开始即可恢复'); };
 }
 
 async function start(message) {
   await dispose(session);
   const url = new URL(message.settings.relayUrl);
-  if (url.protocol !== 'ws:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || url.pathname !== '/stream' || url.search || url.username || url.password) throw new Error('首版本机模式只接受 ws://127.0.0.1:端口/stream');
+  validateRelay(url.href);
   const s = { id: message.id, settings: message.settings, generation: 0, captions: new CaptionBuffer(4000, { retainHistory: true }), audioSeconds: 0, lastMeter: 0, segments: [] };
   session = s;
   try {
@@ -101,7 +127,7 @@ async function start(message) {
       s.segments.at(-1).audioSeconds += event.data.buffer.byteLength / 32_000;
       if (performance.now() - s.lastMeter > 1000) {
         s.lastMeter = performance.now();
-        post(s, { state: { status: 'listening', audioSeconds: Math.round(s.audioSeconds), level: event.data.level, billing: billing(s) } });
+        post(s, { state: { status: 'listening', audioSeconds: Math.round(s.audioSeconds), level: event.data.level, billing: billing(s), remainingSeconds: s.remainingSeconds } });
       }
     };
     s.stream.getAudioTracks()[0].onended = () => { if (session === s) fail(s, '标签页音频采集已结束'); };
@@ -110,7 +136,7 @@ async function start(message) {
     connect(s);
   } catch (error) {
     await dispose(s);
-    throw new Error(`音频采集失败：${error.message}`);
+    throw new Error('音频采集失败，请检查浏览器权限并重试。');
   }
 }
 
