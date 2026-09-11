@@ -1,4 +1,5 @@
 import { t, i18n, bindText, uiError } from './shared/ui-locale.js';
+import { recordAcquisition } from './acquisition.js';
 const $ = id => document.getElementById(id);
 export async function initializeAccountUi(onChange) {
   let busy = false, resendAt = 0, challenge;
@@ -19,15 +20,25 @@ export async function initializeAccountUi(onChange) {
     }
     return data;
   };
-  const status = text => { bindText($('loginFeedback'), typeof text === 'function' ? text : () => text); };
+  const status = (text, trialReady = false) => {
+    bindText($('loginFeedback'), typeof text === 'function' ? text : () => text);
+    $('loginFeedback').classList.toggle('trial-ready', trialReady);
+  };
   const render = data => {
+    if (data.user && data.production) void recordAcquisition();
     $('loginForm').hidden = Boolean(data.user);
     $('signedIn').hidden = !data.user;
-    if ($('accountEntry')) bindText($('accountEntry'), () => data.user ? '我的账户' : '注册 / 登录');
+    if ($('accountEntry')) {
+      const accountName = data.user?.name?.trim() || data.user?.email || '';
+      $('accountEntryGuest').hidden = Boolean(data.user);
+      $('accountEntryName').hidden = !data.user;
+      $('accountEntryName').textContent = accountName;
+      $('accountEntry').title = data.user?.email || '';
+    }
     bindText($('accountEmail'), () => data.user?.email || '');
     $('connectionInfo').hidden = true;
     $('connectionToken').value = '';
-    bindText($('loginHint'), () => data.developmentInbox ? '本机测试：使用 demo@kotoba.test 等以 .test 结尾的邮箱。验证码在这里显示，不会发送真实邮件。' : '输入邮箱获取验证码，首次登录会创建账户。');
+    bindText($('loginHint'), () => data.developmentInbox ? '本机测试：使用 demo@kotoba.test 等以 .test 结尾的邮箱。验证码在这里显示，不会发送真实邮件。' : '输入邮箱获取验证码，首次登录自动创建账户并赠送 20 分钟免费试用。');
     $('loginEmail').placeholder = data.developmentInbox ? 'demo@kotoba.test' : 'you@example.com';
     if (!data.developmentInbox && !data.production) bindText($('formalService'), () => '邮箱验证码会真实发送，账号及额度保存在本机。Stripe 仍使用测试卡，不产生真实扣款；云端部署与正式收费尚未开放。');
     if (data.cloudBeta) {
@@ -40,9 +51,12 @@ export async function initializeAccountUi(onChange) {
     return Boolean(data.user);
   };
   const config = await request('/api/account');
+  $('loginPanel').hidden = false;
+  render(config);
   if (config.turnstileSiteKey) {
     const { createChallenge } = await import('./challenge.js');
-    challenge = await createChallenge(config.turnstileSiteKey);
+    challenge = createChallenge(config.turnstileSiteKey, updateResend);
+    updateResend();
   }
   $('loginPanel').hidden = false;
   if (location.hash === '#loginPanel') $('loginPanel').scrollIntoView({ block: 'start' });
@@ -60,12 +74,9 @@ export async function initializeAccountUi(onChange) {
     if (!$('loginEmail').reportValidity()) return;
     const email = $('loginEmail').value.trim();
     if (config.developmentInbox && !email.endsWith('.test')) { status('本机测试请使用 demo@kotoba.test；真实邮箱登录尚未开放。'); return; }
-    if (challenge && !challenge.token()) { status('请先完成人机验证。'); return; }
     status('正在发送验证码…');
     resendAt = Date.now() + 60_000;
-    try {
-      await request('/api/auth/email-otp/send-verification-otp', { email, type: 'sign-in', ...(challenge ? { challengeToken: challenge.token() } : {}) });
-    } finally { challenge?.reset(); }
+    await request('/api/auth/email-otp/send-verification-otp', { email, type: 'sign-in' });
     if (config.developmentInbox) {
       const code = await request(`/api/account/test-code?email=${encodeURIComponent(email)}`);
       status(() => t('仅本机测试验证码：{code}（5 分钟有效）', { code: code.otp }));
@@ -75,10 +86,14 @@ export async function initializeAccountUi(onChange) {
   $('loginForm').onsubmit = event => {
     event.preventDefault();
     action(async () => {
-      await request('/api/auth/sign-in/email-otp', { email: $('loginEmail').value.trim(), otp: $('loginCode').value.trim() });
+      if (challenge && !challenge.token()) { status('请完成下方人机验证，再提交验证码登录。'); challenge.focus(); return; }
+      let result;
+      try {
+        result = await request('/api/auth/sign-in/email-otp', { email: $('loginEmail').value.trim(), otp: $('loginCode').value.trim(), ...(challenge ? { challengeToken: challenge.token() } : {}) });
+      } finally { challenge?.reset(); }
       $('loginCode').value = '';
       const loggedIn = render(await request('/api/account'));
-      status('已登录，额度仅归属于当前账户。');
+      status(result.trialGranted ? '20 分钟免费试用已到账' : result.trialPending ? '已登录，免费试用暂未到账，请稍后点击「领取免费试用」重试。' : '已登录，额度仅归属于当前账户。', result.trialGranted);
       await onChange(loggedIn);
     });
   };

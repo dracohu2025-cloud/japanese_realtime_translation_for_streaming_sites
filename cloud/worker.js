@@ -9,11 +9,13 @@ import { cloudDatabase } from './database.js';
 import { openStream } from './stream.js';
 import { publicAccess } from './public-access.js';
 import { canonicalLocation, discovery } from './seo.js';
+import { createAcquisition } from '../server/acquisition.js';
+import { createMarketing } from './marketing.js';
 
 const headers = {
   'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
   'X-Frame-Options': 'DENY', 'Strict-Transport-Security': 'max-age=31536000',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self'; connect-src 'self' https://challenges.cloudflare.com; object-src 'none'; frame-ancestors 'none'",
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; frame-src https://challenges.cloudflare.com; style-src 'self'; connect-src 'self' https://challenges.cloudflare.com https://cloudflareinsights.com; object-src 'none'; frame-ancestors 'none'",
 };
 const json = (data, status = 200) => Response.json(data, { status, headers });
 const authRoutes = new Set(['/api/auth/email-otp/send-verification-otp', '/api/auth/sign-in/email-otp', '/api/auth/sign-out', '/api/auth/get-session']);
@@ -44,11 +46,12 @@ export default {
     if (url.pathname === '/health') return json({ ok: true, environment: env.PAYMENT_MODE === 'live' ? 'production' : 'cloud-beta', payments: env.PAYMENT_MODE === 'live' ? 'stripe-live' : 'stripe-test' });
     if (!['GET', 'HEAD'].includes(request.method)) return json({ code: 'METHOD' }, 405);
     const found = discovery(url, env);
-    if (found) return new Response(found.body, { status: found.status || 200, headers: { ...headers, 'Content-Type': found.type, 'Cache-Control': 'public, max-age=3600' } });
-    const path = url.pathname === '/' || url.pathname === '/pricing' ? '/pricing.html' : url.pathname;
-    if (!['/pricing.html', '/pricing.css', '/pricing.js', '/account.js', '/challenge.js', '/production-copy.js', '/policies.html', '/downloads/kotoba-live.zip', '/shared/messages.js', '/shared/i18n-core.js', '/shared/i18n.js', '/shared/ui-locale.js'].includes(path)) return json({ code: 'NOT_FOUND' }, 404);
+    if (found) return new Response(found.body, { status: found.status || 200, headers: { ...headers, 'Content-Type': found.type, 'Cache-Control': 'public, max-age=3600', ...(env.PAYMENT_MODE !== 'live' ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}) } });
+    const path = ({ '/': '/pricing.html', '/pricing': '/pricing.html', '/en': '/en.html', '/demo': '/demo.html', '/en/demo': '/demo.en.html', '/how-it-works': '/how-it-works.html', '/en/how-it-works': '/how-it-works.en.html', '/sample': '/sample.html', '/en/sample': '/sample.en.html', '/subtitle-guide': '/subtitle-guide.html', '/en/subtitle-guide': '/subtitle-guide.en.html', '/faq': '/faq.html', '/en/faq': '/faq.en.html', '/en/policies.html': '/policies.en.html', '/favicon.ico': '/brand/favicon.ico' })[url.pathname] || url.pathname;
+    if (!['/demo.html', '/demo.en.html', '/marketing/kotoba-real-ja-zh-v1.mp4', '/marketing/kotoba-real-ja-zh-v1.jpg', '/marketing.js', '/marketing/kotoba-ja-zh-v1.mp4', '/marketing/kotoba-ja-en-v1.mp4', '/marketing/kotoba-zh-v1.jpg', '/marketing/kotoba-en-v1.jpg', '/sample.html', '/sample.en.html', '/demo/japanese-study.wav', '/subtitle-guide.html', '/subtitle-guide.en.html', '/en.html', '/how-it-works.html', '/how-it-works.en.html', '/faq.html', '/faq.en.html', '/guides.css', '/policies.en.html', '/brand/favicon.ico', '/brand/favicon-32.png', '/brand/apple-touch-icon.png', '/brand/social-card.png', '/pricing.html', '/pricing.css', '/pricing.js', '/account.js', '/acquisition.js', '/challenge.js', '/production-copy.js', '/policies.html', '/downloads/kotoba-live.zip', '/shared/messages.js', '/shared/i18n-core.js', '/shared/i18n.js', '/shared/ui-locale.js'].includes(path)) return json({ code: 'NOT_FOUND' }, 404);
     url.pathname = path;
     const page = secure(await env.ASSETS.fetch(new Request(url, request)));
+    if (path.startsWith('/marketing/') && page.ok) page.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     if (env.PAYMENT_MODE !== 'live') page.headers.set('X-Robots-Tag', 'noindex, nofollow');
     return page;
   },
@@ -67,10 +70,13 @@ export class KotobaBeta extends DurableObject {
       this.access = publicAccess(database, env);
       const stripe = new Stripe(env.STRIPE_SECRET_KEY, { httpClient: Stripe.createFetchHttpClient(), maxNetworkRetries: 1, timeout: 10_000 });
       this.billing = createAccountPayments({ database, stripe, key: env.STRIPE_SECRET_KEY, webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+        legacyPrices: env.STRIPE_LEGACY_PRICES || {},
         prices: { monthly: env.STRIPE_MONTHLY_PRICE, topup: env.STRIPE_TOPUP_PRICE, monthpass: env.STRIPE_MONTHPASS_PRICE }, baseUrl: env.PUBLIC_ORIGIN, mode: env.PAYMENT_MODE || 'test' });
       const initialize = !database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'user'").get();
       this.accounts = await createAccounts({ database, authDatabase, baseUrl: env.PUBLIC_ORIGIN, secret: env.BETTER_AUTH_SECRET, billing: this.billing,
         sendOTP: createEmailSender(env), initialize });
+      this.acquisition = createAcquisition(database, { live: this.live });
+      this.marketing = createMarketing(database);
     });
   }
   async fetch(request) {
@@ -96,6 +102,16 @@ export class KotobaBeta extends DurableObject {
       if (request.headers.get('Origin') && request.headers.get('Origin') !== origin || request.headers.get('Sec-Fetch-Site') === 'cross-site') throw new AppError('FORBIDDEN', '请在账户页面操作', 403);
       if (!['GET', 'POST'].includes(request.method)) throw new AppError('METHOD', '请求方法不支持', 405);
       if (request.method === 'POST' && request.headers.get('Origin') !== origin) throw new AppError('FORBIDDEN', '缺少同源验证', 403);
+      if (path === '/api/marketing/event' && request.method === 'POST') {
+        if (request.headers.get('Sec-GPC') === '1' || request.headers.get('DNT') === '1') return json({ ok: true });
+        if (!request.headers.get('Content-Type')?.startsWith('application/json')) throw new AppError('BAD_REQUEST', '请求格式无效', 400);
+        this.access.reserve(request, 'marketing', 30, 60_000);
+        let input;
+        try { input = JSON.parse(await body(request, 256)); }
+        catch (error) { if (error instanceof AppError) throw error; throw new AppError('BAD_REQUEST', '事件格式无效', 400); }
+        if (!await this.marketing.record(input)) throw new AppError('BAD_REQUEST', '事件格式无效', 400);
+        return json({ ok: true });
+      }
       if (path.startsWith('/api/auth/')) {
         if (!authRoutes.has(path)) throw new AppError('NOT_FOUND', '接口不存在', 404);
         const raw = request.method === 'POST' ? await body(request, 8192) : undefined;
@@ -105,6 +121,8 @@ export class KotobaBeta extends DurableObject {
             this.access.reserve(request, 'auth', 60, 60_000);
             if (path.endsWith('/send-verification-otp')) {
               this.access.reserve(request, 'mail', 15, 3600_000);
+            } else {
+              // 发送邮件保留限频；人机验证在消费邮箱验证码、创建会话之前执行。
               await this.access.verify(request, input.challengeToken);
             }
           }
@@ -113,11 +131,25 @@ export class KotobaBeta extends DurableObject {
         }
         const next = new Request(request.url, { method: request.method, headers: request.headers, body: raw });
         // 数据库适配器不支持异步 SQL 事务，认证请求串行以防 OTP 并发重复消费。
-        const job = this.authQueue.then(() => this.accounts.handleAuth(next));
+        const job = this.authQueue.then(() => this.accounts.handleAuth(next, {
+          beforeTrial: () => { if (this.publicRegistration) this.access.reserve(request, 'trial', 3, 86400_000); },
+        }));
         this.authQueue = job.catch(() => {});
         return secure(await job);
       }
       const req = { headers: Object.fromEntries(request.headers) };
+      if (path === '/api/account/attribution' && request.method === 'POST') {
+        const user = await this.accounts.user(req);
+        const input = JSON.parse(await body(request, 256) || '{}');
+        if (!this.acquisition.record(user.id, input.source)) throw new AppError('BAD_REQUEST', '来源格式无效', 400);
+        return json({ ok: true });
+      }
+      if (['/api/admin/funnel', '/api/admin/marketing'].includes(path) && request.method === 'GET') {
+        const user = await this.accounts.user(req);
+        const allowed = (this.env.METRICS_ADMIN_EMAILS || '').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+        if (!allowed.includes(user.email.toLowerCase())) throw new AppError('FORBIDDEN', '无权访问', 403);
+        return json(path === '/api/admin/marketing' ? await this.marketing.report() : this.acquisition.report());
+      }
       if (path === '/api/account' && request.method === 'GET') {
         let user = null;
         try { const value = await this.accounts.user(req); user = { email: value.email, name: value.name }; }
@@ -132,10 +164,9 @@ export class KotobaBeta extends DurableObject {
         if (request.method !== 'POST') throw new AppError('METHOD', '请求方法不支持', 405);
         const input = JSON.parse(await body(request, 4096) || '{}');
         if (path.endsWith('/checkout') && this.env.PAYMENTS_ENABLED === 'false') throw new AppError('UNAVAILABLE', '付款暂未开放，请稍后重试', 503);
-        if (path.endsWith('/checkout')) return json(await payments.checkout(input.plan, input.paymentMethod));
+        if (path.endsWith('/checkout')) return json(await payments.checkout(input.plan, input.paymentMethod, input.locale));
         if (path.endsWith('/trial')) {
-          if (this.publicRegistration && !(await payments.status()).trialClaimed) this.access.reserve(request, 'trial', 3, 86400_000);
-          await payments.trial();
+          await payments.trial(() => { if (this.publicRegistration) this.access.reserve(request, 'trial', 3, 86400_000); });
         }
         else if (path.endsWith('/reconcile')) await payments.reconcile();
         else if (path.endsWith('/cancel')) await payments.cancel();

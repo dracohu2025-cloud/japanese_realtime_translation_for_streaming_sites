@@ -1,7 +1,7 @@
 import { mkdir, copyFile, readFile, writeFile } from 'node:fs/promises';
 const target = process.argv.includes('--production') ? 'output/cloud-assets-production' : 'output/cloud-assets';
 await mkdir(target, { recursive: true });
-for (const file of ['pricing.html', 'pricing.css', 'pricing.js', 'account.js', 'challenge.js', 'production-copy.js', 'policies.html']) {
+for (const file of ['pricing.html', 'pricing.css', 'pricing.js', 'marketing.js', 'account.js', 'acquisition.js', 'challenge.js', 'production-copy.js', 'policies.html', 'guides.css']) {
   await copyFile(`web/${file}`, `${target}/${file}`);
 }
 await mkdir(`${target}/shared`, { recursive: true });
@@ -19,7 +19,7 @@ if (process.argv.includes('--production')) {
     '我的测试额度 ↗': '我的时长 ↗',
     'LOCAL TEST ACCOUNT': 'YOUR KOTOBA ACCOUNT',
     '我的测试额度': '我的翻译时长',
-    '本机共用一个测试账户。仅验证购买、续订和额度到账；这里的余额不会用于现有插件扣费。': '登录后领取试用或购买时长，再获取插件连接码。时长归属于当前账户。',
+    '本机共用一个测试账户。仅验证购买、续订和额度到账；这里的余额不会用于现有插件扣费。': '首次验证邮箱并登录后，20 分钟免费试用自动到账。获取插件连接码，即可开始翻译。',
     '正在连接本机支付测试服务…': '正在读取账户…',
     '测试额度明细': '时长明细',
     '领取测试额度': '领取免费试用',
@@ -35,3 +35,27 @@ if (process.argv.includes('--production')) {
   for (const [before, after] of Object.entries(replacements)) html = html.replaceAll(before, after);
   await writeFile(path, html);
 }
+
+// 静态公开页面共享同一源文、词典与套餐配置。
+const { localizedPage } = await import('./localized-pages.js');
+const { guidePage } = await import('./guide-pages.js');
+const { demoPage } = await import('./demo-page.js');
+await writeFile(target + '/demo.html', demoPage('zh-CN'));
+await writeFile(target + '/demo.en.html', demoPage('en'));
+for (const kind of ['how-it-works', 'faq', 'subtitle-guide', 'sample']) {
+  await writeFile(target + '/' + kind + '.html', guidePage(kind, 'zh-CN'));
+  await writeFile(target + '/' + kind + '.en.html', guidePage(kind, 'en'));
+}
+for (const [input, english, policy] of [['pricing.html', 'en.html', false], ['policies.html', 'policies.en.html', true]]) {
+  const source = await readFile(target + '/' + input, 'utf8');
+  await writeFile(target + '/' + input, localizedPage(source, { locale: 'zh-CN', policy }));
+  await writeFile(target + '/' + english, localizedPage(source, { locale: 'en', policy }));
+}
+await mkdir(target + '/brand', { recursive: true });
+for (const file of ['favicon.ico', 'favicon-32.png', 'apple-touch-icon.png', 'social-card.png']) await copyFile('web/brand/' + file, target + '/brand/' + file);
+
+await mkdir(target + "/demo", { recursive: true });
+await copyFile("web/demo/japanese-study.wav", target + "/demo/japanese-study.wav");
+
+await mkdir(target + '/marketing', { recursive: true });
+for (const file of ['kotoba-ja-zh-v1.mp4', 'kotoba-ja-en-v1.mp4', 'kotoba-zh-v1.jpg', 'kotoba-en-v1.jpg', 'kotoba-real-ja-zh-v1.mp4', 'kotoba-real-ja-zh-v1.jpg']) await copyFile('web/marketing/' + file, target + '/marketing/' + file);

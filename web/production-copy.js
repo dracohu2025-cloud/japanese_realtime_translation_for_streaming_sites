@@ -6,7 +6,7 @@ export function productionCopy() {
   set('nav a[href="#account"]', '我的时长 ↗');
   set('#account h2', '我的翻译时长');
   set('#account .eyebrow', 'YOUR KOTOBA ACCOUNT');
-  set('#accountDescription', '登录后领取试用或购买时长，再获取插件连接码。时长归属于当前账户。');
+  set('#accountDescription', '首次验证邮箱并登录后，20 分钟免费试用自动到账。获取插件连接码，即可开始翻译。');
   set('#connectionInfo>p', '在插件中填写连接码和服务地址，即可开始使用当前账户的翻译时长。');
   set('[data-plan="trial"]', '领取免费试用');
   set('[data-plan="monthly"]', '订阅月度会员 ↗');

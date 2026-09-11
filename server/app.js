@@ -15,6 +15,7 @@ const files = new Map([
   ['/pricing.css', ['../web/pricing.css', 'text/css']],
   ['/pricing.js', ['../web/pricing.js', 'text/javascript']],
   ['/account.js', ['../web/account.js', 'text/javascript']],
+  ['/acquisition.js', ['../web/acquisition.js', 'text/javascript']],
   ...['messages.js', 'i18n-core.js', 'i18n.js', 'ui-locale.js'].map(file => [`/shared/${file}`, [`../extension/shared/${file}`, 'text/javascript']]),
   ['/captions.js', ['../extension/shared/captions.js', 'text/javascript']],
 ]);
@@ -59,7 +60,7 @@ export function createApp(config, providerFactory = connectSoniox, payments = nu
         if (path === '/api/payments' && req.method === 'GET') result = await accountPayments.status();
         else if (req.method === 'POST' && ['/api/payments/trial', '/api/payments/checkout', '/api/payments/cancel'].includes(path)) {
           const input = JSON.parse((await readBody(req, 4096)).toString() || '{}');
-          if (path.endsWith('/checkout')) result = await accountPayments.checkout(input.plan);
+          if (path.endsWith('/checkout')) result = await accountPayments.checkout(input.plan, input.paymentMethod, input.locale);
           else if (path.endsWith('/trial')) await accountPayments.trial();
           else await accountPayments.cancel();
           result ||= await accountPayments.status();

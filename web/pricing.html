@@ -20,20 +20,30 @@
     {"@context":"https://schema.org","@graph":[
       {"@type":"WebSite","@id":"https://kotoba.uk/#website","name":"Kotoba Live","url":"https://kotoba.uk/","inLanguage":["en","zh-CN"],"publisher":{"@id":"https://kotoba.uk/#org"}},
       {"@type":"Organization","@id":"https://kotoba.uk/#org","name":"DracoNova Inc","url":"https://kotoba.uk/","email":"support@kotoba.uk"},
-      {"@type":"SoftwareApplication","@id":"https://kotoba.uk/#app","name":"Kotoba Live","alternateName":"ことば","applicationCategory":"BrowserApplication","operatingSystem":"Chrome","description":"Chrome extension that turns Japanese audio in the current browser tab into real-time captions. Supports Japanese to English and Simplified Chinese.","url":"https://kotoba.uk/","downloadUrl":"https://kotoba.uk/downloads/kotoba-live.zip","publisher":{"@id":"https://kotoba.uk/#org"},"offers":[
+      {"@type":"SoftwareApplication","@id":"https://kotoba.uk/#app","name":"Kotoba Live","alternateName":"ことば","applicationCategory":"BrowserApplication","operatingSystem":"Chrome","description":"Chrome extension that turns Japanese audio in the current browser tab into real-time captions. Supports Japanese to English and Simplified Chinese.","url":"https://kotoba.uk/","downloadUrl":"https://chromewebstore.google.com/detail/bgjpmnfpjjmldfhcggodmbpolgkplmih","publisher":{"@id":"https://kotoba.uk/#org"},"offers":[
         {"@type":"Offer","name":"Free trial","price":"0","priceCurrency":"USD","description":"One-time 20-minute trial per account."},
-        {"@type":"Offer","name":"Monthly","price":"9.99","priceCurrency":"USD","description":"10 hours per billing period, no rollover."},
-        {"@type":"Offer","name":"Top-up","price":"4.99","priceCurrency":"USD","description":"5 hours, valid 90 days after purchase."}
+        {"@type":"Offer","name":"Monthly","price":"19.99","priceCurrency":"USD","description":"20 hours per billing period, no rollover."},
+        {"@type":"Offer","name":"Top-up","price":"9.99","priceCurrency":"USD","description":"10 hours, valid 90 days after purchase."}
       ]}
     ]}
     </script>
   </head>
 <body>
-  <header><a class="brand" href="/">ことば <span>Kotoba Live</span></a><nav aria-label="页面导航"><a class="nav-install" href="#install">下载与安装 ↓</a><a href="#plans">方案</a><a href="#rules">计费说明</a><a href="#account">我的测试额度 ↗</a></nav><div class="header-actions"><label class="ui-language"><span>界面语言</span><select data-ui-language aria-label="界面语言"><option value="auto">跟随浏览器</option><option value="zh-CN">简体中文</option><option value="en">English</option></select></label><a id="accountEntry" class="account-entry" href="#loginPanel">注册 / 登录</a></div></header>
+  <header><a class="brand" href="/">ことば <span>Kotoba Live</span></a><nav aria-label="页面导航"><a class="nav-install" href="#install">下载与安装 ↓</a><a href="#plans">方案</a><a href="/how-it-works">如何工作</a><a href="/faq">常见问题</a><a href="/subtitle-guide">字幕选择指南</a><a href="#account">我的测试额度 ↗</a></nav><div class="header-actions"><label class="ui-language"><span>界面语言</span><select data-ui-language aria-label="界面语言"><option value="auto">跟随浏览器</option><option value="zh-CN">简体中文</option><option value="en">English</option></select></label><a id="accountEntry" class="account-entry" href="#loginPanel"><span id="accountEntryGuest">注册 / 登录</span><span id="accountEntryName" hidden></span></a></div></header>
   <main>
     <div class="preview"><span>内测预览</span> <span id="previewText">Stripe 测试模式 · 不产生真实扣款 · 测试额度尚未接入视频翻译</span></div>
-    <section class="hero"><div><p class="eyebrow">日本語を、もっと身近に。</p><h1>为每一次听懂，<br>留一点时间<span>。</span></h1><p class="lead">跟上一堂课，听完一次访谈。<br>原声留在耳边，译文留在眼前。</p><div class="hero-actions"><a class="download-button" href="/downloads/kotoba-live.zip" download>下载 Chrome 插件 ↓</a><a class="guide-link" href="#install">查看安装与使用步骤 →</a></div><p class="download-note">适用于电脑端 Chrome · ZIP 安装包 · 无需先付费</p><p class="download-note">尚未上架 Chrome 商店，需按下方步骤手动安装。</p></div><aside class="time-note"><span>YOUR TIME, WELL SPENT</span><strong>10<span>小时</span></strong><p>每月多一点理解，<br>从一段日语开始。</p><div class="ticks" aria-hidden="true"></div></aside></section>
+    <section class="hero"><div><p class="eyebrow">日本語を、もっと身近に。</p><h1>为每一次听懂，<br>留一点时间<span>。</span></h1><p class="lead">跟上一堂课，听完一次访谈。<br>原声留在耳边，译文留在眼前。</p><div class="hero-actions"><a class="download-button" href="https://chromewebstore.google.com/detail/bgjpmnfpjjmldfhcggodmbpolgkplmih" target="_blank" rel="noopener">从 Chrome 商店安装 ↗</a><a class="manual-download" href="/downloads/kotoba-live.zip" download>手动下载安装包 ↓</a><a class="guide-link" href="#install">查看安装与使用步骤 →</a><a class="guide-link" href="/demo">观看实机演示 →</a><a class="guide-link" href="#film" data-film-open>观看 32 秒演示 →</a></div><p class="download-note">适用于电脑端 Chrome · 免费安装 · 无需先付费</p><p class="download-note">无法访问 Chrome 商店？可直接下载安装包，按下方指南手动安装。</p></div><aside class="time-note"><span>YOUR TIME, WELL SPENT</span><strong>20<span>小时</span></strong><p>每月多一点理解，<br>从一段日语开始。</p><div class="ticks" aria-hidden="true"></div></aside></section>
     <section id="about" class="product">
+      <details id="film" class="marketing-film">
+        <summary><span>听见日语，看懂每一句。</span><span class="film-duration">32 秒产品短片</span></summary>
+        <div class="film-stage">
+          <video id="marketingVideo" playsinline preload="none" width="1920" height="1080" aria-label="Kotoba Live 产品短片" data-video="/marketing/kotoba-ja-zh-v1.mp4" data-poster="/marketing/kotoba-zh-v1.jpg"></video>
+          <button id="playMarketingVideo" class="film-play" type="button" aria-label="播放产品短片"><span aria-hidden="true">▶</span> 播放短片</button>
+        </div>
+        <p class="film-caption">日语原声，双语字幕。视频中的字幕节奏为演示编排。</p>
+        <p id="filmError" role="status" hidden>视频暂时无法播放，请稍后重试。你仍可下载插件体验。</p>
+      </details>
+
       <p class="eyebrow">WHAT IT IS</p>
       <h2>在 Chrome 里，给日语视频加实时字幕。</h2>
       <p>Kotoba Live 是一款 Chrome 扩展。打开任意正在播放日语的网页，它采集当前标签页的声音，生成可拖动的实时字幕。目标语言可选英文或简体中文，原声始终保留。</p>
@@ -45,22 +55,23 @@
       </ul>
     </section>
     <details id="install" class="install-guide"><summary class="install-toggle"><span>下载、安装与使用指南</span><span class="install-toggle-icon" aria-hidden="true"></span></summary><div class="install-content">
-      <div class="install-heading"><div><p class="eyebrow">START LISTENING</p><h2 id="installTitle">从下载到第一句字幕，只需四步。</h2><p>先安装插件，再连接账户。新账户可领取 20 分钟免费试用。</p></div><a class="guide-link" href="/downloads/kotoba-live.zip" download>下载 ZIP 安装包 ↓</a></div>
+      <div class="install-heading"><div><p class="eyebrow">START LISTENING</p><h2 id="installTitle">从下载到第一句字幕，只需四步。</h2><p>先安装插件，再连接账户。首次验证邮箱并登录后，自动获得 20 分钟免费试用。</p></div><a class="guide-link" href="/downloads/kotoba-live.zip" download>下载 ZIP 安装包 ↓</a></div>
       <ol class="install-steps">
-        <li><span class="step-number" aria-hidden="true">01</span><h3>下载并解压</h3><p>点击上方下载按钮，将 ZIP 解压到一个固定文件夹。安装后保留这个文件夹，插件仍会读取其中的文件。</p><p class="step-tip">不要把 ZIP 直接拖进 Chrome。</p></li>
-        <li><span class="step-number" aria-hidden="true">02</span><h3>添加到 Chrome</h3><p>在 Chrome 地址栏输入：</p><code class="extension-address">chrome://extensions</code><p>打开右上角「开发者模式」，点击「加载已解压的扩展程序」，选择解压后含 manifest.json 的文件夹。</p></li>
-        <li><span class="step-number" aria-hidden="true">03</span><h3>登录并连接账户</h3><p>在下方用邮箱登录，领取免费试用或购买时长。点击「获取插件连接码」，复制后粘贴到插件中，再点击「连接账户」。</p><a class="guide-link" href="#loginPanel">前往登录 / 获取连接码 →</a></li>
+        <li><span class="step-number" aria-hidden="true">01</span><h3>安装 Kotoba Live</h3><p>推荐从 Chrome 商店安装。无法访问商店时，也可使用本站提供的 ZIP 安装包。</p><a class="guide-link" href="https://chromewebstore.google.com/detail/bgjpmnfpjjmldfhcggodmbpolgkplmih" target="_blank" rel="noopener">从 Chrome 商店安装 ↗</a></li>
+        <li><span class="step-number" aria-hidden="true">02</span><h3>固定到工具栏</h3><p>点击 Chrome 工具栏的拼图图标，找到 Kotoba Live，再点击固定图标，方便随时打开。</p></li>
+        <li><span class="step-number" aria-hidden="true">03</span><h3>登录并连接账户</h3><p>在下方用邮箱登录，首次登录自动获得 20 分钟免费试用。点击「获取插件连接码」，复制后粘贴到插件中，再点击「连接账户」。</p><a class="guide-link" href="#loginPanel">前往登录 / 获取连接码 →</a></li>
         <li><span class="step-number" aria-hidden="true">04</span><h3>播放视频，开始翻译</h3><p>打开日语视频并播放，点击 Kotoba Live，选择目标语言，再点击「开始翻译当前标签页」。字幕会显示在视频画面下方，可拖动和调整大小。</p><p class="step-tip">点击 Chrome 工具栏的拼图图标，将 Kotoba Live 固定，方便下次打开。</p></li>
       </ol>
-      <details class="install-help"><summary>安装或使用时遇到问题？</summary><div class="install-help-grid"><div><h3>找不到 manifest.json？</h3><p>先解压 ZIP。如果解压后还有一层文件夹，请进入后选择直接包含 manifest.json 的那一层。</p></div><div><h3>插件无法开始翻译？</h3><p>请确认已连接账户、有剩余时长，并在播放视频的普通网页中启动；Chrome 设置页不支持翻译。</p></div><div><h3>如何更新插件？</h3><p>重新下载安装包，将文件解压并替换原文件夹中的内容，再到 chrome://extensions 点击 Kotoba Live 的重新加载按钮。</p></div></div></details>
+      <details id="manual-install" class="install-help"><summary>手动安装指南（无法访问 Chrome 商店时使用）</summary><p><a class="guide-link" href="/downloads/kotoba-live.zip" download>手动下载安装包 ↓</a></p><p>下载并解压 ZIP 到固定文件夹；安装后请保留该文件夹。不要把 ZIP 直接拖进 Chrome。</p><p>在 Chrome 地址栏输入：</p><code class="extension-address">chrome://extensions</code><p>打开右上角「开发者模式」，点击「加载已解压的扩展程序」，选择解压后含 manifest.json 的文件夹。</p></details>
+      <details class="install-help"><summary>安装或使用时遇到问题？</summary><div class="install-help-grid"><div><h3>找不到 manifest.json？</h3><p>先解压 ZIP。如果解压后还有一层文件夹，请进入后选择直接包含 manifest.json 的那一层。</p></div><div><h3>插件无法开始翻译？</h3><p>请确认已连接账户、有剩余时长，并在播放视频的普通网页中启动；Chrome 设置页不支持翻译。</p></div><div><h3>如何更新插件？</h3><p>商店安装的版本由 Chrome 自动更新。手动安装的版本需重新下载、替换原文件夹中的文件，再到 chrome://extensions 点击 Kotoba Live 的重新加载按钮。</p></div></div></details>
     </div></details>
     <div class="account-overview">
     <section id="loginPanel" class="login-panel" tabindex="-1" hidden aria-label="账户登录">
       <div><p class="eyebrow">YOUR KOTOBA ACCOUNT</p><h2>让时长跟着你的账户走。</h2><p id="loginHint"></p></div>
-      <form id="loginForm"><label for="loginEmail">邮箱</label><div class="login-row"><input id="loginEmail" type="email" autocomplete="email" placeholder="demo@kotoba.test" required maxlength="254"><button id="sendCode" type="button">获取验证码</button></div><label for="loginCode">6 位验证码</label><div class="login-row"><input id="loginCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button type="submit">登录 / 注册</button></div></form>
+      <p id="loginFeedback" role="status" aria-live="polite"></p><form id="loginForm"><label for="loginEmail">邮箱</label><div class="login-row email-row"><input id="loginEmail" type="email" autocomplete="email" placeholder="demo@kotoba.test" required maxlength="254"><button id="sendCode" type="button">获取验证码</button></div><label for="loginCode">6 位验证码</label><div class="login-row"><input id="loginCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></div><div id="loginChallenge" class="login-challenge" tabindex="-1" hidden><p id="challengeStatus" role="status" aria-live="polite"></p><div id="challengeWidget"></div><button id="retryChallenge" type="button" class="secondary" hidden>重新加载验证</button></div><div class="login-row"><button type="submit">登录 / 注册</button></div></form>
       <button id="googleLogin" hidden>使用 Google 登录</button>
       <div id="signedIn" hidden><p>当前账户：<strong id="accountEmail"></strong></p><div class="login-row"><button id="getConnection" class="primary">获取插件连接码 →</button><button id="logout" class="secondary">退出登录</button></div></div>
-      <p class="hint"><a href="/policies.html#terms">服务与退款说明</a> · <a href="/policies.html#privacy">隐私说明</a> · <a href="#install">安装插件</a></p><p id="loginFeedback" role="status" aria-live="polite"></p>
+      <p class="hint"><a href="/policies.html#terms">服务与退款说明</a> · <a href="/policies.html#privacy">隐私说明</a> · <a href="#install">安装插件</a></p>
       <div id="connectionInfo" hidden><p>在插件「设置」中填写以下两项，然后开始翻译。此连接扣减当前账户的测试时长。</p><label for="connectionUrl">服务地址</label><input id="connectionUrl" readonly><label for="connectionToken">账户连接码</label><div class="login-row"><input id="connectionToken" type="password" readonly><button id="copyConnection">复制连接码</button></div><p id="connectionExpiry"></p></div>
     </section>
     <section id="account" class="account"><div><p class="eyebrow">LOCAL TEST ACCOUNT</p><h2>我的测试额度</h2><p id="accountDescription">本机共用一个测试账户。仅验证购买、续订和额度到账；这里的余额不会用于现有插件扣费。</p></div><div class="balance"><strong id="balance">—</strong><span>当前有效额度</span></div><div class="account-actions"><button id="refresh" class="secondary">刷新额度</button><button id="cancel" class="secondary" hidden>取消测试订阅的自动续订</button></div><p id="feedback" role="status" aria-live="polite">正在连接本机支付测试服务…</p><ul id="grants" aria-label="测试额度明细"></ul></section>
@@ -70,13 +81,17 @@
       <article class="plan featured"><div class="recommend">日常观看</div><p class="plan-index">02 / 常常听懂</p><h2>月度会员</h2><p class="price"><strong id="monthlyPrice">—</strong><span>/ 月 · USD</span></p><p class="allowance" id="monthlyTime">正在读取方案…</p><p class="description">为课程、访谈和直播，留出固定的观看时间。</p><button data-plan="monthly" disabled>测试月度订阅 ↗</button><ul><li>每个订阅周期补充额度，不结转</li><li>每月自动续订，可取消续订</li><li>额度用完即停，不自动加购</li></ul></article>
       <article class="plan"><p class="plan-index">03 / 再听一会儿</p><h2>加时包</h2><p class="price"><strong id="topupPrice">—</strong><span>/ 包 · USD</span></p><p class="allowance" id="topupTime">正在读取方案…</p><p class="description">遇到想继续看的内容，就多留一点时间。</p><button data-plan="topup" disabled>测试购买加时包 ↗</button><ul><li>单次购买，不自动续费</li><li>到账起 90 天有效</li><li>取消会员后，仍可使用有效额度</li></ul></article>
     </section>
+    <section id="walletPlans" class="wallet-plans" data-chinese-only aria-labelledby="walletTitle">
+      <div class="wallet-description"><p class="eyebrow">按次购买 · 不自动续费</p><h2 id="walletTitle">支付宝 / 微信支付专区</h2><p>不想绑定银行卡？购买一次性月包，用熟悉的方式付款。</p><p class="wallet-terms">含 20 小时翻译时长，到账后 30 天有效。到期不结转，可再次购买；每笔月包分别计算有效期。</p></div>
+      <div class="wallet-purchase"><h3>一次性月包</h3><p class="price"><strong id="monthpassPrice">—</strong><span>/ 包 · USD</span></p><div class="wallet-buttons"><button data-plan="monthpass" data-method="alipay" disabled>支付宝支付 ↗</button><button data-plan="monthpass" data-method="wechat_pay" disabled>微信支付 ↗</button></div><p>付款确认后到账，不会自动续费。</p><a id="walletLogin" class="guide-link" href="#loginPanel">登录后选择支付方式 →</a><p id="walletFeedback" role="status" aria-live="polite"></p><p id="walletUnavailable" hidden role="status">钱包支付暂不可用，请稍后重试。</p></div>
+    </section>
     <p class="common">所有方案均含：目标语言选择 · 双语对照 · 字幕拖动与缩放 · 背景透明度 · 说话人编号</p>
     <section id="rules" class="rules"><div><p class="eyebrow">CLEAR FROM THE START</p><h2>每一分钟，<br>都算得明白。</h2><p>以下是付费测试版的拟定规则。<br>实际收款开放前会再次明确展示。</p></div><div class="questions">
       <details open><summary>什么时间会计入额度？</summary><p>按服务端实际接收处理的音频时长，以秒累计。连接等待不计时；停止采集后不计时。播放中的静音仍计时，回放或跳转后重新翻译会重新计时；服务自身重试不重复扣额度。</p></details>
-      <details><summary>额度什么时候到期？</summary><p>月度额度按实际订阅周期生效，到当前周期结束，不结转。加时包从付款确认起 90 天有效。优先使用月度额度，再使用试用额度，最后按到期先后使用加时包。</p></details>
+      <details><summary>额度什么时候到期？</summary><p>月度会员额度到订阅周期结束，不结转；一次性月包到账后 30 天有效，加时包到账后 90 天有效。优先使用月度会员和月包中更早到期的额度，再使用试用额度，最后按到期先后使用加时包。</p></details>
       <details><summary>会自动扣款吗？</summary><p>月度会员每月自动续订，可在账户中取消，取消后已支付周期的额度仍有效。试用不会自动转付费，加时包不会自动续费。用完额度只会停止翻译，不会自动加购。</p></details>
       <details><summary>付款后为什么还没有显示额度？</summary><p>系统需要等待 Stripe 确认付款。返回这个页面不等于付款成功；确认到账前显示等待，可点击“刷新额度”。重复收到同一笔支付通知不会重复发放。</p></details>
       <details><summary>这个页面现在能买到正式服务吗？</summary><p id="formalService">不能。目前是本机支付测试，使用 Stripe 测试卡，不产生真实扣款。真实账户、云端翻译额度扣减、退款流程及正式收款尚未开放。最终税费与适用条款会在正式付款前展示。</p></details>
     </div></section>
-  </main><footer><span>ことば / Kotoba Live</span><span>更多理解，刚刚好的时间。</span><a href="/">返回本机字幕演示 ↗</a></footer><script type="module" src="/pricing.js"></script>
+  </main><footer><span>ことば / Kotoba Live</span><span>更多理解，刚刚好的时间。</span><a href="/how-it-works">如何工作</a><a href="/faq">常见问题</a><a href="/subtitle-guide">字幕选择指南</a><a href="/demo">实机演示</a><a href="/policies.html">服务与隐私</a></footer><script type="module" src="/pricing.js"></script><script type="module" src="/marketing.js"></script>
 </body></html>

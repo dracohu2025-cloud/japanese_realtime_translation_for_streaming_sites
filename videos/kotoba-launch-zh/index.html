@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=1920,height=1080"><title>Kotoba Live — 听见日语，看懂每一句</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0}html,body{width:1920px;height:1080px;overflow:hidden;background:#f5f4ec;color:#123e3b;font-family:"Helvetica Neue",Arial,sans-serif}#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#f5f4ec}.clip,.scene{position:absolute;inset:0}.scene{overflow:hidden}.brand{position:absolute;left:108px;top:76px;display:flex;gap:20px;align-items:center;font-size:34px;font-weight:650;letter-spacing:-1.4px}.brand img{width:64px;height:64px;border-radius:16px}.serif{font-family:Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-5px}.eyebrow{font-size:21px;letter-spacing:4.2px;font-weight:500}.rule{height:1px;background:#b9c6b7;position:absolute;left:110px;right:110px;bottom:101px}.footer{position:absolute;left:110px;bottom:56px;color:#536b60;font-size:23px;letter-spacing:.3px}.number{position:absolute;right:110px;bottom:54px;color:#536b60;font-size:22px}.intro-title{position:absolute;left:105px;top:305px;z-index:2;font-size:128px;line-height:1.09}.intro-title .line{display:block}.intro-title .soft{color:#557361}.intro-sub{position:absolute;left:112px;top:653px;font-size:31px;line-height:1.5}.intro-tag{position:absolute;left:111px;top:235px}.sound-art{position:absolute;right:110px;top:255px;width:300px;height:510px;display:flex;align-items:center;justify-content:center;gap:17px}.sound-art i{display:block;width:23px;border-radius:20px;background:#c7d7bf;transform-origin:center}.sound-art i:nth-child(1){height:120px}.sound-art i:nth-child(2){height:240px}.sound-art i:nth-child(3){height:390px}.sound-art i:nth-child(4){height:500px;background:#123e3b}.sound-art i:nth-child(5){height:335px}.sound-art i:nth-child(6){height:190px}.sound-art i:nth-child(7){height:95px}.intro-jp{position:absolute;right:175px;top:807px;font-size:27px;letter-spacing:13px;color:#536b60}.demo-head{position:absolute;left:108px;top:95px;font-size:63px;letter-spacing:-2px}.demo-langs{position:absolute;right:110px;top:124px;font-size:22px;letter-spacing:2px}.player{position:absolute;left:240px;top:223px;width:1440px;height:716px;border:1px solid #aab8a6;border-radius:18px;overflow:hidden;background:#e4e9dc}.player-top{height:64px;background:#f9f9f2;border-bottom:1px solid #bdc9b7;display:flex;align-items:center;padding:0 30px;gap:10px}.dot{width:10px;height:10px;border-radius:50%;background:#bdc9b7}.tabtitle{font-size:19px;margin-left:22px;color:#50655b}.tab-live{margin-left:auto;font-size:15px;letter-spacing:3px}.lesson-label{position:absolute;top:123px;left:70px;font-size:18px;letter-spacing:4px}.lesson-title{position:absolute;left:68px;top:181px;font-size:86px;line-height:1.08;letter-spacing:-3px}.lesson-note{position:absolute;left:72px;top:397px;font-size:23px;color:#4b6557}.orbit{position:absolute;right:126px;top:128px;width:302px;height:302px;border:1px solid #9fb193;border-radius:50%;display:flex;align-items:center;justify-content:center}.orbit::before{content:"";position:absolute;inset:26px;border:1px solid #bac6af;border-radius:50%}.orbit::after{content:"";position:absolute;inset:52px;border:1px solid #c4cebb;border-radius:50%}.orbit-bars{display:flex;gap:14px;align-items:center;z-index:1}.orbit-bars i{height:60px;width:18px;border-radius:20px;background:#55765c;transform-origin:center}.orbit-bars i:nth-child(2){height:130px}.orbit-bars i:nth-child(3){height:92px}.captions{position:absolute;left:310px;top:706px;width:1300px;height:240px;background:#153d38;color:#f8f8ef;border-radius:13px;padding:28px 40px;box-shadow:0 16px 36px #123e3b12}.caption-group{position:absolute;inset:28px 40px;opacity:0;visibility:hidden}.caption-jp{font-family:sans-serif;font-size:26px;line-height:1.4;color:#d5e4d5;margin-bottom:17px;max-width:1200px}.caption-en{font-size:35px;line-height:1.27;font-weight:500;max-width:1210px;letter-spacing:-.4px}.speaker{display:inline-block;font-size:17px;line-height:1;border:1px solid #9cbc9b;padding:4px 7px;margin-right:12px;border-radius:4px;color:#d5e4d5;vertical-align:middle}.demo-disclaimer{position:absolute;left:240px;top:990px;font-size:21px;color:#536b60}.demo-count{position:absolute;right:240px;top:990px;font-size:21px;color:#536b60}.feature-title{position:absolute;left:105px;top:297px;font-size:103px;line-height:1.07;letter-spacing:-4px}.feature-title span{display:block}.feature-list{position:absolute;left:113px;top:604px;display:flex;flex-direction:column;gap:23px;font-size:29px}.feature-list div{display:flex;align-items:center;gap:18px}.feature-list b{font-weight:400;color:#557361;font-size:20px}.workspace{position:absolute;left:860px;top:266px;width:952px;height:618px;border-top:1px solid #b9c6b7;border-bottom:1px solid #b9c6b7}.workspace::before{content:"";position:absolute;left:120px;top:0;height:100%;width:1px;background:#d8e0d0}.workspace::after{content:"";position:absolute;left:0;top:308px;width:100%;height:1px;background:#d8e0d0}.actual-caption{position:absolute;left:850px;top:425px;width:984px;height:256px;overflow:hidden;border-radius:18px;box-shadow:0 20px 35px #123e3b18}.actual-caption img{position:absolute;width:1920px;height:1200px;left:-469px;top:-682px}.pointer{position:absolute;left:914px;top:447px;width:32px;height:44px;z-index:6}.feature-disclaimer{position:absolute;left:862px;top:914px;font-size:20px;color:#536b60}.outro{background:#123e3b;color:#f5f4ec}.outro .brand{color:#f5f4ec}.outro-title{position:absolute;left:105px;top:283px;font-size:127px;line-height:1.08;letter-spacing:-4px}.outro-title span{display:block}.outro .accent{color:#d3e0c4}.url{position:absolute;left:113px;top:645px;font-size:58px;letter-spacing:-1px}.cta{position:absolute;right:110px;top:688px;width:472px;height:112px;background:#d3e0c4;color:#123e3b;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:25px;font-size:29px;font-weight:550}.outro-note{position:absolute;right:110px;top:829px;width:472px;text-align:center;color:#d1dfd0;font-size:22px}.outro .rule{background:#537067}.outro .footer,.outro .number{color:#d1dfd0}.outro-mark{position:absolute;right:160px;top:260px;display:flex;align-items:center;gap:26px;height:310px}.outro-mark i{width:42px;height:130px;border:1px solid #709076;border-radius:25px}.outro-mark i:nth-child(2){height:250px}.outro-mark i:nth-child(3){height:185px}
+
+/* Chinese edition: generous CJK spacing and a localized subtitle UI illustration. */
+@font-face{font-family:KotobaSong;src:local("Songti SC");font-weight:400}
+body{font-family:system-ui,sans-serif}
+.serif{font-family:KotobaSong,serif;letter-spacing:1px}
+.brand{font-family:"Helvetica Neue",Arial,sans-serif}
+.intro-title{font-size:116px;line-height:1.3;top:300px}
+.intro-sub{font-size:30px;line-height:1.7;top:650px}
+.eyebrow{letter-spacing:4px}
+.demo-head{font-size:62px;letter-spacing:1px}
+.lesson-title{font-size:70px;line-height:1.36;letter-spacing:1px;top:178px}
+.lesson-note{top:408px}
+.caption-en{font-size:35px;line-height:1.5;letter-spacing:.3px}
+.feature-title{font-size:87px;line-height:1.35;letter-spacing:1px}
+.feature-list{top:606px}
+.outro-title{font-size:112px;line-height:1.32;letter-spacing:1px}
+.actual-caption{background:rgba(12,21,25,.9);color:#fff;padding:18px 24px;display:flex;flex-direction:column;gap:13px}
+.ui-tools{display:flex;gap:7px;align-items:center}
+.ui-tools>span,.ui-size>span{border:1px solid #ffffff45;border-radius:6px;background:#142822cc;padding:4px 10px;font:17px system-ui;white-space:nowrap}
+.ui-tools>span:last-child{display:flex;align-items:center;gap:10px}
+.ui-slider{display:inline-block;width:96px;height:7px;background:#9de6bd;border-radius:5px;position:relative}
+.ui-slider:after{content:"";position:absolute;right:10px;top:-4px;width:15px;height:15px;border-radius:50%;background:#9de6bd}
+.ui-original{font:22px/1.5 sans-serif;color:#d1dfdc}
+.ui-translation{font:600 31px/1.5 system-ui}
+.ui-speaker{display:inline-block;font:600 16px/1.5 system-ui;vertical-align:middle;border:1px solid #98d4c2;color:#98d4c2;border-radius:5px;padding:0 6px;margin-right:10px}
+.ui-size{margin-top:auto;text-align:right}
+
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="32" data-width="1920" data-height="1080">
+<section id="scene-1" class="clip" data-start="0" data-duration="6" data-track-index="1"><div class="scene" id="intro">
+<div class="brand"><img src="assets/kotoba-logo.png" alt="Kotoba"><span>Kotoba Live</span></div>
+<div class="eyebrow intro-tag">让日语，离你更近一点。</div>
+<h1 class="serif intro-title"><span class="line">听见日语，</span><span class="line soft">看懂每一句。</span></h1>
+<p class="intro-sub">原声留在耳边，译文留在眼前。<br>让喜欢的内容，少一点语言的距离。</p>
+<div class="sound-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="intro-jp">ことば</div>
+<div class="rule"></div><div class="footer">保留原声，读懂其中的意思。</div><div class="number">01 — 04</div>
+</div></section>
+<section id="scene-2" class="clip" data-start="6" data-duration="14.5" data-track-index="1"><div class="scene" id="demo">
+<h2 class="serif demo-head">听日语，看中文字幕。</h2><div class="demo-langs">日本語 &nbsp; → &nbsp; 中文</div>
+<div class="player"><div class="player-top"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="tabtitle">留一点时间，听喜欢的内容</span><span class="tab-live">日语原声</span></div>
+<div class="lesson-label">每天，听懂一点。</div><div class="serif lesson-title">从喜欢的内容，<br>听见新的世界。</div><div class="lesson-note">一段声音，多一份理解。</div>
+<div class="orbit" aria-hidden="true"><div class="orbit-bars"><i></i><i></i><i></i></div></div></div>
+<div class="captions">
+<div class="caption-group" id="phrase1"><p class="caption-jp"><span class="speaker">01</span>今日は外国語の勉強について話します。</p><p class="caption-en">今天，我们来聊聊外语学习。</p></div>
+<div class="caption-group" id="phrase2"><p class="caption-jp"><span class="speaker">01</span>毎日10分でも、好きな内容を聞き続けることが大切です。</p><p class="caption-en">哪怕每天只有十分钟，坚持听自己喜欢的内容也很重要。</p></div>
+<div class="caption-group" id="phrase3"><p class="caption-jp"><span class="speaker">01</span>分からない言葉があったら、一度止めて、もう一度聞いてみましょう。</p><p class="caption-en">遇到不懂的词，就暂停一下，再听一遍。</p></div>
+</div>
+<div class="demo-disclaimer">合成日语音频样本 · 字幕出现时间为演示编排</div><div class="demo-count">02 — 04</div>
+</div></section>
+<section id="scene-3" class="clip" data-start="20.5" data-duration="6.5" data-track-index="1"><div class="scene" id="features">
+<div class="brand"><img src="assets/kotoba-logo.png" alt="Kotoba"><span>Kotoba Live</span></div>
+<h2 class="serif feature-title"><span>字幕的位置，</span><span>由你决定。</span></h2>
+<div class="feature-list"><div><b>01</b><span>自由拖动位置</span></div><div><b>02</b><span>调整字幕框大小</span></div><div><b>03</b><span>选择翻译语言</span></div></div>
+<div class="workspace" aria-hidden="true"></div>
+<div class="actual-caption">
+<div class="ui-tools"><span>⠿ 拖动字幕</span><span>重置</span><span>隐藏日文</span><span>背景 90% <i class="ui-slider"></i></span></div>
+<p class="ui-original"><b class="ui-speaker">说话人 1</b>今日は、使いやすいデザインについて話します。</p>
+<p class="ui-translation"><b class="ui-speaker">说话人 1</b>今天，我们来聊聊易于使用的设计。</p>
+<div class="ui-size"><span>↘ 调整大小</span></div>
+</div>
+<svg class="pointer" viewBox="0 0 32 44" aria-hidden="true"><path d="M2 2L27 26L16 27L23 41L17 44L10 29L2 36Z" fill="#123e3b" stroke="#f5f4ec" stroke-width="2"/></svg>
+<div class="feature-disclaimer">字幕界面示意 · 示例文本</div>
+<div class="rule"></div><div class="footer">支持双语对照，也可以只显示中文。</div><div class="number">03 — 04</div>
+</div></section>
+<section id="scene-4" class="clip" data-start="27" data-duration="5" data-track-index="1"><div class="scene outro" id="outro">
+<div class="brand"><img src="assets/kotoba-logo.png" alt="Kotoba"><span>Kotoba Live</span></div>
+<h2 class="serif outro-title"><span>让日语，</span><span class="accent">离你更近一点。</span></h2>
+<div class="outro-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="url">kotoba.uk</div>
+<div class="cta"><span>免费体验 20 分钟</span><span>↗</span></div><div class="outro-note">无需绑定银行卡</div>
+<div class="rule"></div><div class="footer">在电脑端 Chrome 中，开启实时翻译。</div><div class="number">ことば</div>
+</div></section>
+<audio id="score" src="assets/original-score.wav" data-start="0" data-duration="32" data-track-index="10" data-volume="1"></audio>
+<audio id="japanese-voice" src="assets/japanese-study.wav" data-start="6.4" data-duration="13.568" data-track-index="11" data-volume="0.95"></audio>
+</div>
+<script>
+const tl=gsap.timeline({paused:true});
+tl.from('#intro .brand',{opacity:0,y:12,duration:.7},0);
+tl.from('#intro .intro-tag',{opacity:0,y:15,duration:.8},.25);
+tl.from('#intro .line',{opacity:0,y:40,stagger:.25,duration:1.15,ease:'power3.out'},.45);
+tl.from('#intro .intro-sub',{opacity:0,y:22,duration:.9},1.5);
+tl.from('#intro .sound-art i',{scaleY:.2,opacity:0,stagger:.08,duration:1.3,ease:'power3.out'},.7);
+tl.from('#intro .intro-jp',{opacity:0,y:15,duration:1},2.1);
+tl.to('#intro .sound-art i',{scaleY:.78,stagger:.06,duration:1.3,yoyo:true,repeat:1,ease:'sine.inOut'},3);
+tl.from('#demo .demo-head',{opacity:0,y:20,duration:.7},6);
+tl.from('#demo .demo-langs',{opacity:0,duration:.6},6.2);
+tl.from('#demo .player',{opacity:0,y:35,duration:.9,ease:'power3.out'},6);
+tl.from('#demo .captions',{opacity:0,y:20,duration:.55},6.55);
+tl.set('#phrase1',{autoAlpha:1},6.7);
+tl.set('#phrase1',{autoAlpha:0},10.15);tl.set('#phrase2',{autoAlpha:1},10.15);
+tl.set('#phrase2',{autoAlpha:0},15.1);tl.set('#phrase3',{autoAlpha:1},15.1);
+tl.from('#demo .demo-disclaimer',{opacity:0,duration:.5},6.65);
+[...document.querySelectorAll('.orbit-bars i')].forEach((bar,i)=>tl.to(bar,{scaleY:.45+.12*i,duration:.5+i*.15,yoyo:true,repeat:17,ease:'sine.inOut'},6.45+i*.13));
+tl.from('#features .brand',{opacity:0,y:12,duration:.6},20.5);
+tl.from('#features .feature-title span',{opacity:0,y:30,stagger:.15,duration:.9,ease:'power3.out'},20.6);
+tl.from('#features .workspace',{opacity:0,duration:.8},20.8);
+tl.from('#features .actual-caption',{opacity:0,y:25,duration:.75},21);
+tl.from('#features .feature-list div',{opacity:0,x:-16,stagger:.65,duration:.6},21.45);
+tl.from('#features .feature-disclaimer',{opacity:0,duration:.7},21.3);
+tl.from('#features .pointer',{opacity:0,duration:.35},21.9);
+tl.to('#features .actual-caption',{x:-58,y:119,duration:1.1,ease:'power2.inOut'},22.6);
+tl.to('#features .pointer',{x:-58,y:119,duration:1.1,ease:'power2.inOut'},22.6);
+tl.to('#features .actual-caption',{x:-14,y:-20,duration:1.15,ease:'power2.inOut'},24.15);
+tl.to('#features .pointer',{x:-14,y:-20,duration:1.15,ease:'power2.inOut'},24.15);
+tl.to('#features .pointer',{opacity:0,duration:.35},25.65);
+tl.from('#outro .brand',{opacity:0,y:10,duration:.6},27);
+tl.from('#outro .outro-title span',{opacity:0,y:28,stagger:.15,duration:.9,ease:'power3.out'},27.15);
+tl.from('#outro .url',{opacity:0,y:18,duration:.7},27.65);
+tl.from('#outro .cta',{opacity:0,y:16,duration:.65},28.05);
+tl.from('#outro .outro-note',{opacity:0,duration:.6},28.3);
+tl.from('#outro .outro-mark i',{opacity:0,scaleY:.3,stagger:.15,duration:1.1,ease:'power3.out'},27.3);
+window.__timelines=window.__timelines||{};window.__timelines.main=tl;
+</script></body></html>

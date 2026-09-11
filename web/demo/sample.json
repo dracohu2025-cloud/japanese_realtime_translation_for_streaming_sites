@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-09-08T23:16:14.423Z",
+  "audioSeconds": 13.568,
+  "script": "今日は、外国語の勉強について話します。毎日十分でも、好きな内容を聞き続けることが大切です。分からない言葉があったら、一度止めて、もう一度聞いてみましょう。",
+  "runs": [
+    {
+      "language": "zh",
+      "firstTranslationMs": 4083,
+      "original": "今日は外国語の勉強について話します。毎日10分でも、好きな内容を聞き続けることが大切です。分からない言葉があったら、一度止めて、もう一度聞いてみましょう。",
+      "translation": "今天我来讲讲学习外语。 哪怕每天10分钟，也很重要的是持续听自己喜欢的内容。 如果有不懂的词， 就先停一下，再试着听一遍。"
+    },
+    {
+      "language": "en",
+      "firstTranslationMs": 4465,
+      "original": "今日は外国語の勉強について話します。毎日10分でも、好きな内容を聞き続けることが大切です。分からない言葉があったら、一度止めて、もう一度聞いてみましょう。",
+      "translation": "Today I'll talk about studying foreign languages. Even if it's only 10 minutes a day, it's important to keep listening to what you like. If there's a word you don't understand, pause once, and try listening again."
+    }
+  ]
+}

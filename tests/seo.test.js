@@ -32,3 +32,22 @@ test('http 与 www 归一到正式 https 域名，其它来源不改写', () => 
   assert.equal(canonicalLocation('https://kotoba.uk/robots.txt', origin), undefined);
   assert.equal(canonicalLocation('https://evil.test/', origin), undefined);
 });
+
+test('模型说明书价格与时长符合现行方案，不再发布旧报价', () => {
+  const text = llmsTxt(origin);
+  assert.match(text, /Monthly: USD 19\.99 for 20 hours/);
+  assert.match(text, /Top-up: USD 9\.99 for 10 hours, valid 90 days/);
+  assert.match(text, /monthly pass.*USD 19\.99 for 20 hours, valid 30 days/);
+  assert.match(text, /Trial: 20 minutes/);
+  assert.doesNotMatch(text, /Monthly: USD 9\.99|Top-up: USD 4\.99/);
+});
+
+test('英文页面进入 sitemap，训练爬虫与普通搜索爬虫规则分离', () => {
+  assert.match(sitemapXml(origin), /<loc>https:\/\/kotoba.uk\/en<\/loc>/);
+  assert.match(sitemapXml(origin), /<loc>https:\/\/kotoba.uk\/en\/policies.html<\/loc>/);
+  assert.match(robotsTxt(origin, true), /User-agent: GPTBot\nUser-agent: ClaudeBot\nDisallow: \//);
+  assert.match(robotsTxt(origin, true), /User-agent: \*\nAllow: \//);
+  assert.match(robotsTxt(origin, true), /Disallow: \/api\//);
+  assert.equal(canonicalLocation('https://kotoba.uk/en/?x=1', origin), origin + '/en?x=1');
+  assert.equal(canonicalLocation('https://kotoba.uk/policies.en.html', origin), origin + '/en/policies.html');
+});

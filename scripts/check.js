@@ -14,4 +14,8 @@ const manifest = JSON.parse(await readFile('extension/manifest.json', 'utf8'));
 assert.equal(manifest.manifest_version, 3);
 for (const file of [manifest.background.service_worker, manifest.action.default_popup, manifest.options_page]) await readFile(`extension/${file}`);
 assert(!manifest.host_permissions, '首版不应申请所有网站的永久读取权限');
+for (const locale of await readdir('extension/_locales')) {
+  const messages = JSON.parse(await readFile(`extension/_locales/${locale}/messages.json`, 'utf8'));
+  assert(messages.extensionDescription.message.length <= 132, `${locale} 商店简介不能超过 132 字符`);
+}
 process.stdout.write('JavaScript 语法与扩展清单检查通过。\n');

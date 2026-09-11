@@ -34,6 +34,7 @@
     "electron": "^44.2.0",
     "electron-builder": "^25.1.8",
     "miniflare": "5.20260903.0-alpha",
+    "parse5": "8.0.0",
     "wrangler": "4.129.0"
   },
   "build": {

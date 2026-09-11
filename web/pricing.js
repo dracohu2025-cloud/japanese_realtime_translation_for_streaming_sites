@@ -4,17 +4,25 @@ const $ = id => document.getElementById(id);
 const installGuide = $('install');
 const openInstallGuide = () => { installGuide.open = true; };
 document.querySelectorAll('a[href="#install"], a[download]').forEach(link => link.addEventListener('click', openInstallGuide));
-const followInstallHash = () => { if (location.hash === '#install') openInstallGuide(); };
+document.querySelectorAll('a[download]').forEach(link => link.addEventListener('click', () => {
+  $('manual-install').open = true;
+}));
+const followInstallHash = () => {
+  if (['#install', '#manual-install'].includes(location.hash)) openInstallGuide();
+  if (location.hash === '#manual-install') $('manual-install').open = true;
+};
 window.addEventListener('hashchange', followInstallHash);
 followInstallHash();
 
 const buttons = [...document.querySelectorAll('[data-plan]')];
 let production = false;
 let canPurchase = true;
+let walletPaymentsAvailable = false;
+let walletCheckout = false;
 let token; let enabled = false; let busy = false; let accountMode = false;
 const time = i18n.duration;
 const money = i18n.money;
-function feedback(text, error = false) { bindText($('feedback'), () => text); $('feedback').classList.toggle('error', error); }
+function feedback(text, error = false) { if (walletCheckout) bindText($('walletFeedback'), () => text); bindText($('feedback'), () => text); $('feedback').classList.toggle('error', error); }
 async function api(path = '', body) {
   const response = await fetch(`/api/payments${path}`, { method: body ? 'POST' : 'GET', headers: { ...(!accountMode ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   const data = await response.json();
@@ -22,17 +30,20 @@ async function api(path = '', body) {
   return data;
 }
 function render(data) {
+  $('walletLogin').hidden = enabled;
   bindText($('balance'), () => time(data.seconds));
   $('grants').replaceChildren();
   for (const grant of data.grants) {
     const item = document.createElement('li');
-    const label = document.createElement('span'); bindText(label, () => `${t({ trial: '免费试用', monthly: 'Kotoba 月度会员', topup: 'Kotoba 加时包' }[grant.kind] || '翻译时长')} · ${time(grant.seconds)}`);
+    const label = document.createElement('span'); bindText(label, () => `${t({ trial: '免费试用', monthly: 'Kotoba 月度会员', topup: 'Kotoba 加时包', monthpass: 'Kotoba 一次性月包' }[grant.kind] || '翻译时长')} · ${time(grant.seconds)}`);
     const expiry = document.createElement('span'); bindText(expiry, () => grant.expiresAt ? t('到期：{date}', { date: i18n.date(grant.expiresAt) }) : production ? '一次性试用额度' : '一次性测试额度');
     item.append(label, expiry); $('grants').append(item);
   }
   const subscription = data.subscription;
   const active = subscription && !['canceled', 'incomplete_expired'].includes(subscription.status);
-  for (const button of buttons) button.disabled = busy || !enabled || (button.dataset.plan !== 'trial' && !canPurchase) || (button.dataset.plan === 'trial' && data.trialClaimed) || (button.dataset.plan === 'monthly' && active);
+  const trialButton = buttons.find(button => button.dataset.plan === 'trial');
+  bindText(trialButton, () => data.trialClaimed ? '免费试用已领取' : '领取免费试用');
+  for (const button of buttons) button.disabled = busy || !enabled || (button.dataset.plan === 'monthpass' && !walletPaymentsAvailable) || (button.dataset.plan !== 'trial' && !canPurchase) || (button.dataset.plan === 'trial' && data.trialClaimed) || (button.dataset.plan === 'monthly' && active);
   $('cancel').hidden = !active || subscription.cancelAtPeriodEnd;
   if (subscription?.cancelAtPeriodEnd) feedback(production ? '已取消自动续订；有效时长保留到原到期日。' : '已取消自动续订；已到账的有效测试额度保留到原到期日。');
 }
@@ -46,10 +57,11 @@ async function action(fn) {
   finally { busy = false; $('refresh').disabled = !enabled; $('cancel').disabled = false; await refresh().catch(error => feedback(uiError(error), true)); }
 }
 buttons.forEach(button => button.onclick = () => action(async () => {
+  walletCheckout = button.dataset.plan === 'monthpass';
   if (button.dataset.plan === 'trial') { await api('/trial', {}); feedback(production ? '20 分钟试用时长已领取。' : accountMode ? '20 分钟测试额度已领取。使用当前账户连接码翻译时会扣除此额度。' : '20 分钟测试额度已领取。现有翻译插件暂不扣除此额度。'); }
   else {
     feedback(production ? '正在打开安全付款页面…' : '正在创建 Stripe 测试收银台…');
-    const data = await api('/checkout', { plan: button.dataset.plan });
+    const data = await api('/checkout', { plan: button.dataset.plan, locale: i18n.getLocale(), ...(button.dataset.method ? { paymentMethod: button.dataset.method } : {}) });
     if (new URL(data.url).origin !== 'https://checkout.stripe.com') throw new Error('收银台地址验证失败');
     location.assign(data.url);
   }
@@ -65,6 +77,9 @@ try {
     bindText($(name + 'Price'), () => money(catalog.plans[name].amount));
     bindText($(name + 'Time'), () => t(name === 'monthly' ? '每月 {time} 翻译时长' : '{time} 翻译时长', { time: time(catalog.plans[name].seconds) }));
   }
+  if (catalog.plans.monthpass) bindText($('monthpassPrice'), () => money(catalog.plans.monthpass.amount));
+  walletPaymentsAvailable = catalog.walletPaymentsAvailable === true;
+  $('walletUnavailable').hidden = walletPaymentsAvailable;
   production = catalog.production === true;
   canPurchase = catalog.paymentsAvailable ?? catalog.testPaymentsAvailable;
   enabled = production || canPurchase;
@@ -83,8 +98,8 @@ try {
     }
     enabled = await initializeAccountUi(async loggedIn => {
       enabled = loggedIn; $('refresh').disabled = !enabled;
-      if (enabled) { await refresh(); feedback(production ? '已登录，可以领取试用或购买时长。' : '已登录，可以领取试用或测试购买。'); }
-      else { buttons.forEach(button => { button.disabled = true; }); bindText($('balance'), () => '—'); $('grants').replaceChildren(); $('cancel').hidden = true; feedback('请先登录，查看自己的额度。'); }
+      if (enabled) { await refresh(); feedback(production ? '已登录，可以连接插件开始翻译，或购买更多时长。' : '已登录，可以领取试用或测试购买。'); }
+      else { $('walletLogin').hidden = false; buttons.forEach(button => { button.disabled = true; }); bindText($('balance'), () => '—'); $('grants').replaceChildren(); $('cancel').hidden = true; feedback('请先登录，查看自己的额度。'); }
     });
   } else {
     const response = await fetch('/api/setup');
@@ -95,6 +110,6 @@ try {
   await refresh();
   const returned = new URLSearchParams(location.search).get('checkout');
   if (production && enabled && returned === 'returned') { await api('/reconcile', {}); await refresh(); }
-  feedback(!enabled ? '请先登录，查看自己的额度。' : returned === 'returned' ? '已从收银台返回，付款状态与额度以 Stripe 回调确认为准。' : returned === 'canceled' ? '已返回，未完成的付款不会发放额度。' : production ? '可以领取试用或购买翻译时长。' : '已连接 Stripe 测试环境，可以领取测试额度或测试购买。');
+  feedback(!enabled ? '请先登录，查看自己的额度。' : returned === 'returned' ? '已从收银台返回，付款状态与额度以 Stripe 回调确认为准。' : returned === 'canceled' ? '已返回，未完成的付款不会发放额度。' : production ? '试用时长在首次登录后自动到账，也可购买更多翻译时长。' : '已连接 Stripe 测试环境，可以领取测试额度或测试购买。');
   setInterval(() => { if (!busy && document.visibilityState === 'visible') refresh().catch(() => feedback('暂时无法刷新，请稍后重试。', true)); }, 5000);
 } catch (error) { enabled = false; $('refresh').disabled = true; feedback(uiError(error), true); }

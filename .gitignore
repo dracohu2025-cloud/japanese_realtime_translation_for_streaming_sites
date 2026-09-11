@@ -9,3 +9,11 @@ output/
 .dev.vars
 .dev.vars.*
 .wrangler/
+
+# Keep finished marketing assets and source; exclude local recording/cache output.
+videos/**/capture/
+videos/**/snapshots/
+videos/**/*.log
+videos/**/check.json
+videos/**/frame.md
+videos/**/.hyperframes/

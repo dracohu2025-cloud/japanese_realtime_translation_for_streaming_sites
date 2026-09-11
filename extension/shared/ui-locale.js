@@ -1,9 +1,10 @@
 import { createTranslator, resolveLocale } from './i18n.js';
 const extension = Boolean(globalThis.chrome?.runtime?.id);
 const browserLanguages = () => extension && chrome.i18n?.getUILanguage ? [chrome.i18n.getUILanguage()] : navigator.languages?.length ? navigator.languages : [navigator.language || 'en'];
+const pageLocale = !extension && document.documentElement.dataset.pageLocale;
 let preference = 'auto';
 try { if (!extension) preference = localStorage.getItem('kotoba.uiLanguage') || 'auto'; } catch { /* 存储不可用时仍允许本页切换。 */ }
-export const i18n = createTranslator(resolveLocale(preference, browserLanguages()));
+export const i18n = createTranslator(pageLocale || resolveLocale(preference, browserLanguages()));
 export const t = i18n.t;
 export const uiError = error => Object.hasOwn(globalThis.KotobaMessages, error?.message) ? error.message : '操作未成功，请稍后重试。';
 const bindings = new Map();
@@ -26,7 +27,7 @@ function repaint() {
     node.textContent = t(render());
   }
   for (const [node, attribute, key] of attributes) node.setAttribute(attribute, t(key));
-  document.querySelectorAll('[data-ui-language]').forEach(select => { select.value = preference; });
+  document.querySelectorAll('[data-ui-language]').forEach(select => { select.value = pageLocale || preference; });
 }
 // 仅绑定页面加载时的静态产品文字；不会翻译用户输入、邮箱、连接码或字幕内容。
 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -52,7 +53,16 @@ for (const element of document.querySelectorAll('meta[name="description"], meta[
 const normalizePreference = value => ['zh-CN', 'en'].includes(value) ? value : 'auto';
 async function setPreference(value) {
   preference = normalizePreference(value);
-  i18n.setLocale(resolveLocale(preference, browserLanguages()));
+  const locale = resolveLocale(preference, browserLanguages());
+  if (pageLocale && locale !== pageLocale) {
+    try { localStorage.setItem('kotoba.uiLanguage', preference); } catch { /* URL 仍可切换。 */ }
+    const link = document.querySelector('link[rel="alternate"][hreflang="' + locale + '"]');
+    if (link) {
+      const destination = new URL(link.href); destination.search = location.search; destination.hash = location.hash;
+      location.assign(destination.href); return;
+    }
+  }
+  i18n.setLocale(pageLocale || locale);
   repaint();
   if (extension) await chrome.storage.local.set({ uiLanguage: preference });
   else { try { localStorage.setItem('kotoba.uiLanguage', preference); } catch { /* 本页选择仍然生效。 */ } }
@@ -68,7 +78,7 @@ if (extension) {
     if (area === 'local' && changes.uiLanguage) { preference = normalizePreference(changes.uiLanguage.newValue); i18n.setLocale(resolveLocale(preference, browserLanguages())); repaint(); }
   });
 } else window.addEventListener('storage', event => {
-  if (event.key === 'kotoba.uiLanguage') { preference = normalizePreference(event.newValue); i18n.setLocale(resolveLocale(preference, browserLanguages())); repaint(); }
+  if (!pageLocale && event.key === 'kotoba.uiLanguage') { preference = normalizePreference(event.newValue); i18n.setLocale(resolveLocale(preference, browserLanguages())); repaint(); }
 });
-window.addEventListener('languagechange', () => { if (preference === 'auto') { i18n.setLocale(resolveLocale('auto', browserLanguages())); repaint(); } });
+window.addEventListener('languagechange', () => { if (!pageLocale && preference === 'auto') { i18n.setLocale(resolveLocale('auto', browserLanguages())); repaint(); } });
 repaint();

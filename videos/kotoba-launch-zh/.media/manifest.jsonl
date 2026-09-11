@@ -1,0 +1,3 @@
+{"id":"bgm_001","type":"bgm","path":"assets/japanese-study.wav","source":"existing","description":"japanese study","duration":13.6,"provenance":{"provider":"local","adopted":true}}
+{"id":"image_001","type":"image","path":"assets/kotoba-logo.png","source":"existing","description":"kotoba logo","width":1254,"height":1254,"provenance":{"provider":"local","adopted":true}}
+{"id":"bgm_002","type":"bgm","path":"assets/original-score.wav","source":"existing","description":"original score","duration":32,"provenance":{"provider":"local","adopted":true}}
