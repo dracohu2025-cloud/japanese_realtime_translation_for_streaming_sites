@@ -35,7 +35,7 @@ async function fixture(t, authOptions = {}) {
     assert.equal(response.status, 200, await response.clone().text());
     const cookie = response.headers.getSetCookie().map(value => value.split(';')[0]).join('; ');
     const body = await response.json();
-    return { cookie, userId: body.user.id, otp };
+    return { cookie, userId: body.user.id, otp, trialGranted: body.trialGranted };
   }
   async function socket(token) {
     const ws = new WebSocket(baseUrl.replace('http', 'ws') + '/stream', { origin: baseUrl });
@@ -58,15 +58,58 @@ test('邮箱验证码建立真实会话，验证码只用一次，账户额度�
   assert.equal((await f.request('/api/setup')).status, 401);
   const alice = await f.login('alice@kotoba.test');
   const bob = await f.login('bob@kotoba.test');
+  assert.equal(alice.trialGranted, true);
+  assert.equal(bob.trialGranted, true);
   const replay = await f.request('/api/auth/sign-in/email-otp', { email: 'alice@kotoba.test', otp: alice.otp });
   assert.notEqual(replay.status, 200);
   assert.equal((await f.request('/api/payments/trial', {}, alice.cookie)).status, 200);
   assert.equal((await (await f.request('/api/payments', undefined, alice.cookie)).json()).seconds, 1200);
-  assert.equal((await (await f.request('/api/payments', undefined, bob.cookie)).json()).seconds, 0);
+  assert.equal((await (await f.request('/api/payments', undefined, bob.cookie)).json()).seconds, 1200);
+  await f.billing.forUser(alice.userId).store.transact(s => { s.grants[0].usedSamples = 60 * 16000; });
+  await Promise.all([f.request('/api/payments/trial', {}, alice.cookie), f.request('/api/payments/trial', {}, alice.cookie)]);
+  assert.equal((await (await f.request('/api/payments', undefined, alice.cookie)).json()).seconds, 1140, '重复领取不重置已使用时长');
+  assert.equal((await (await f.request('/api/payments', undefined, bob.cookie)).json()).seconds, 1200, '扣时仅影响当前账户');
   assert.equal((await f.request('/api/payments/trial', {}, bob.cookie, { Origin: 'https://evil.example' })).status, 403);
   assert.equal((await f.request('/api/auth/sign-out', {}, bob.cookie, { Origin: 'https://evil.example' })).status, 403);
   const stored = f.database.prepare('SELECT value FROM verification').all();
   assert(!JSON.stringify(stored).includes(alice.otp), '验证码不以明文保存到数据库');
+});
+
+test('重复登录不补回试用、不改付费额度；发放失败仍保留登录并允许重试', async t => {
+  const f = await fixture(t);
+  const email = 'repeat@kotoba.test';
+  const alice = await f.login(email);
+  const account = f.billing.forUser(alice.userId);
+  await account.store.transact(s => {
+    s.grants[0].usedSamples = 60 * 16000;
+    s.grants.push({ id: 'paid', kind: 'topup', seconds: 36000, startsAt: 0, expiresAt: null });
+  });
+  f.database.prepare('UPDATE kotoba_email_limits SET last_at = 0').run();
+  const again = await f.login(email);
+  assert.equal(again.trialGranted, false);
+  assert.equal((await account.payments.status()).seconds, 37140);
+  assert.equal(account.store.snapshot().grants.length, 2);
+
+  const pendingEmail = 'pending@kotoba.test';
+  await f.request('/api/auth/email-otp/send-verification-otp', { email: pendingEmail, type: 'sign-in' });
+  const baseUrl = `http://127.0.0.1:${f.config.port}`;
+  let reserved = 0;
+  const response = await f.accounts.handleAuth(new Request(baseUrl + '/api/auth/sign-in/email-otp', {
+    method: 'POST', headers: { Origin: baseUrl, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: pendingEmail, otp: f.accounts.readTestCode(pendingEmail).otp }),
+  }), { beforeTrial: () => { reserved++; throw new Error('rate limited'); } });
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(reserved, 1);
+  assert.equal(data.trialGranted, false);
+  assert.equal(data.trialPending, true);
+  const pending = f.billing.forUser(data.user.id);
+  assert.equal((await pending.payments.status()).seconds, 0);
+  assert.equal((await pending.payments.status()).trialClaimed, false);
+  const cookie = response.headers.getSetCookie().map(value => value.split(';')[0]).join('; ');
+  assert.equal((await f.request('/api/payments', undefined, cookie)).status, 200);
+  assert.equal((await f.request('/api/payments/trial', {}, cookie)).status, 200);
+  assert.equal((await pending.payments.status()).seconds, 1200);
 });
 
 test('登录码错误次数受限，测试邮箱不能冒充真实邮箱，测试收件箱禁止混入真实认证', async t => {
@@ -117,12 +160,12 @@ test('Stripe 签名事件按客户路由，只给所属用户加时，重复事�
   const alice = f.billing.forUser('payment-alice'), bob = f.billing.forUser('payment-bob');
   await alice.store.transact(s => { s.customer = 'cus_alice'; });
   await bob.store.transact(s => { s.customer = 'cus_bob'; });
-  const checkout = { id: 'cs_alice', customer: 'cus_alice', livemode: false, payment_status: 'paid', mode: 'payment', currency: 'usd', amount_total: 499, metadata: { app: 'kotoba-billing-v1', instance: alice.store.snapshot().instance, plan: 'topup' } };
+  const checkout = { id: 'cs_alice', customer: 'cus_alice', livemode: false, payment_status: 'paid', mode: 'payment', currency: 'usd', amount_total: 999, metadata: { app: 'kotoba-billing-v1', instance: alice.store.snapshot().instance, plan: 'topup' } };
   f.stripe.checkout = { sessions: { retrieve: async () => checkout, listLineItems: async () => ({ has_more: false, data: [{ price: 'price_topup', quantity: 1 }] }) } };
   const body = JSON.stringify({ id: 'evt_test', type: 'checkout.session.completed', livemode: false, created: Math.floor(Date.now() / 1000), data: { object: checkout } });
   const signature = f.stripe.webhooks.generateTestHeaderString({ payload: body, secret });
   await Promise.all([f.billing.webhook(Buffer.from(body), signature), f.billing.webhook(Buffer.from(body), signature)]);
-  assert.equal((await alice.payments.status()).seconds, 18000);
+  assert.equal((await alice.payments.status()).seconds, 36000);
   assert.equal((await bob.payments.status()).seconds, 0);
   await assert.rejects(f.billing.webhook(Buffer.from(body), 'invalid'));
 });
@@ -161,6 +204,7 @@ test('音频按采样数扣时、按优先级使用、重复序号不重传、�
 test('WebSocket 串行扣时，余额耗尽停止，上游收到的音频不会超过余额', async t => {
   const f = await fixture(t), alice = await f.login('stream@kotoba.test');
   const account = f.billing.forUser(alice.userId);
+  await account.store.transact(s => { s.grants[0].usedSamples = 1200 * 16000; });
   const { token } = await (await f.request('/api/account/connection', {}, alice.cookie)).json();
   const empty = await f.socket(token);
   await until(() => empty.messages.some(m => m.code === 'QUOTA_EXHAUSTED'));
@@ -232,4 +276,24 @@ test('并发验证码邮件使用各自请求的界面语言，语言不影响�
   assert.equal(sent.find(value => value.email === 'english@example.com').locale, 'en');
   assert.equal(sent.find(value => value.email === 'chinese@example.com').locale, 'zh-CN');
   for (const { email, otp } of sent) assert.equal((await f.request('/api/auth/sign-in/email-otp', { email, otp })).status, 200);
+});
+
+test('月包与订阅按到期顺序扣时，已过期月包不参与余额', async t => {
+  const f = await fixture(t), account = f.billing.forUser('wallet-quota');
+  const now = Date.now();
+  await account.store.transact(s => { s.grants = [
+    { id: 'subscription', kind: 'monthly', seconds: 1, startsAt: 0, expiresAt: now + 20000 },
+    { id: 'pass-later', kind: 'monthpass', seconds: 1, startsAt: 0, expiresAt: now + 30000 },
+    { id: 'pass-first', kind: 'monthpass', seconds: .1, startsAt: 0, expiresAt: now + 10000 },
+    { id: 'pass-expired', kind: 'monthpass', seconds: 100, startsAt: 0, expiresAt: now },
+  ]; });
+  const quota = createQuota(account.store, () => now);
+  await quota.start('wallet-order');
+  await quota.write('wallet-order', 0, Buffer.alloc(6400), () => true);
+  const grants = account.store.snapshot().grants;
+  assert.equal(grants.find(g => g.id === 'pass-first').usedSamples, 1600);
+  assert.equal(grants.find(g => g.id === 'subscription').usedSamples, 1600);
+  assert.equal(grants.find(g => g.id === 'pass-later').usedSamples, undefined);
+  assert.equal(grants.find(g => g.id === 'pass-expired').usedSamples, undefined);
+  await quota.stop('wallet-order');
 });

@@ -1,7 +1,7 @@
 import { AppError } from './config.js';
 
 export const SAMPLE_RATE = 16_000;
-const priority = { monthly: 0, trial: 1, topup: 2 };
+const priority = { monthly: 0, monthpass: 0, trial: 1, topup: 2 };
 export const remainingSamples = grant => {
   if (grant.suspended) return 0;
   const samples = Math.round(grant.seconds * SAMPLE_RATE);

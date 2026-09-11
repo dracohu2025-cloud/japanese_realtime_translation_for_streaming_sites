@@ -57,11 +57,34 @@
     "MAX_STREAMS": "10",
     "LEGAL_ENTITY": "DracoNova Inc",
     "SUPPORT_EMAIL": "support@kotoba.uk",
+    "METRICS_ADMIN_EMAILS": "dracohu2025@gmail.com",
     "KOTOBA_EMAIL_FROM": "login@aigc.green",
     "SONIOX_MODEL": "stt-rt-v5",
     "TURNSTILE_SITE_KEY": "0x4AAAAAAEsXE3a83Ia0Hc0j",
-    "STRIPE_MONTHLY_PRICE": "price_1UDHYYGDmcxGUUz4TzfGWkwu",
-    "STRIPE_TOPUP_PRICE": "price_1UDHYZGDmcxGUUz4af2stGEt",
-    "STRIPE_MONTHPASS_PRICE": "price_1UDLI7GDmcxGUUz4G9sHPuCi"
+    "STRIPE_MONTHLY_PRICE": "price_1UDM4AGDmcxGUUz417DkQrNc",
+    "STRIPE_TOPUP_PRICE": "price_1UDM4BGDmcxGUUz4qYAylFGo",
+    "STRIPE_MONTHPASS_PRICE": "price_1UDM4CGDmcxGUUz4gzbr5XO7",
+    "STRIPE_LEGACY_PRICES": {
+      "price_1UDHYYGDmcxGUUz4TzfGWkwu": {
+        "kind": "monthly",
+        "amount": 999,
+        "seconds": 36000,
+        "mode": "subscription"
+      },
+      "price_1UDLI7GDmcxGUUz4G9sHPuCi": {
+        "kind": "monthpass",
+        "amount": 999,
+        "seconds": 36000,
+        "mode": "payment",
+        "days": 30
+      },
+      "price_1UDHYZGDmcxGUUz4af2stGEt": {
+        "kind": "topup",
+        "amount": 499,
+        "seconds": 18000,
+        "mode": "payment",
+        "days": 90
+      }
+    }
   }
 }

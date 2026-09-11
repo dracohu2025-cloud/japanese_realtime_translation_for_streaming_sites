@@ -19,9 +19,9 @@ export async function stripeTestClient() {
 
 export async function ensureTestPrices(stripe) {
   const prices = {};
-  for (const name of ['monthly', 'topup']) {
+  for (const name of ['monthly', 'topup', 'monthpass']) {
     const plan = plans[name];
-    const lookup = `kotoba_v1_${name}_usd`;
+    const lookup = `kotoba_v2_${name}_usd`;
     const existing = await stripe.prices.list({ lookup_keys: [lookup], limit: 1 });
     if (existing.data.length) { prices[name] = existing.data[0].id; continue; }
     const product = await stripe.products.create({ name: plan.name, metadata: { app: 'kotoba-billing-v1', plan: name } }, { idempotencyKey: `${lookup}:product` });

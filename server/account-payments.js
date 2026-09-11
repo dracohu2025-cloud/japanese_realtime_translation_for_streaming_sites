@@ -4,7 +4,7 @@ import { createQuota } from './quota.js';
 import { requirePaymentMode } from './payment-catalog.js';
 
 // 新的本机多账户内测数据库；不迁移或认领旧的共用测试余额。
-export function createAccountPayments({ database, stripe, key, webhookSecret, prices, baseUrl, mode = 'test' }) {
+export function createAccountPayments({ database, stripe, key, webhookSecret, prices, legacyPrices = {}, baseUrl, mode = 'test' }) {
   const live = requirePaymentMode(key, mode);
   const table = live ? 'kotoba_billing_live' : 'kotoba_billing';
   database.exec('CREATE TABLE IF NOT EXISTS ' + table + ' (user_id TEXT PRIMARY KEY, state TEXT NOT NULL)');
@@ -32,7 +32,7 @@ export function createAccountPayments({ database, stripe, key, webhookSecret, pr
           return job;
         },
       };
-      const service = { payments: createPayments({ stripe, key, webhookSecret, prices, baseUrl, store, mode }), quota: createQuota(store), store };
+      const service = { payments: createPayments({ stripe, key, webhookSecret, prices, legacyPrices, baseUrl, store, mode }), quota: createQuota(store), store };
       services.set(userId, service);
       return service;
     },

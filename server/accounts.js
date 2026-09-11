@@ -53,7 +53,20 @@ export async function createAccounts({ database, authDatabase = database, baseUr
   };
   return {
     auth, billing, developmentInbox, googleEnabled: Boolean(google),
-    async handleAuth(request) {
+    async handleAuth(request, { beforeTrial } = {}) {
+      const signingIn = request.method === 'POST' && new URL(request.url).pathname === '/api/auth/sign-in/email-otp';
+      if (signingIn) {
+        const response = await auth.handler(request);
+        if (!response.ok) return response;
+        const data = await response.clone().json();
+        if (!data.user?.emailVerified) return response;
+        // 仅在邮箱验证成功后发放；账本事务保证重登、重试和并发请求不重复加时。
+        let trialGranted = false, trialPending = false;
+        try { trialGranted = await billing.forUser(data.user.id).payments.trial(beforeTrial); }
+        catch { trialPending = true; }
+        // 发放失败不丢失已经建立的登录会话，前端可明确提示稍后领取。
+        return new Response(JSON.stringify({ ...data, trialGranted, trialPending }), { status: response.status, headers: response.headers });
+      }
       const sending = request.method === 'POST' && new URL(request.url).pathname === '/api/auth/email-otp/send-verification-otp';
       if (!sending) return auth.handler(request);
       let input;

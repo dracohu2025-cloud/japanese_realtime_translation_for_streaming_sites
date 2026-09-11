@@ -7,7 +7,7 @@ const appName = 'kotoba-billing-v1';
 const objectId = object => typeof object === 'string' ? object : object?.id;
 const priceId = line => objectId(line.price) || line.pricing?.price_details?.price;
 
-export function createPayments({ stripe, key, webhookSecret, store, prices, baseUrl, now = () => Date.now(), mode = 'test' }) {
+export function createPayments({ stripe, key, webhookSecret, store, prices, legacyPrices = {}, baseUrl, now = () => Date.now(), mode = 'test' }) {
   const live = requirePaymentMode(key, mode);
   if (live && new URL(baseUrl).protocol !== 'https:') throw new Error('正式支付需要 HTTPS');
   if (!webhookSecret?.startsWith('whsec_')) throw new Error('缺少支付回调签名密钥');
@@ -20,6 +20,12 @@ export function createPayments({ stripe, key, webhookSecret, store, prices, base
       (plan.mode === 'subscription' ? price.recurring?.interval !== 'month' || price.recurring?.interval_count !== 1 : price.recurring)) {
       throw new Error('Stripe 价格与套餐不一致');
     }
+  };
+  // 历史价格仅用于归账；新购买始终使用当前报价，不能按金额猜测权益。
+  const planForPrice = (kind, id) => {
+    if (id && id === prices[kind]) return plans[kind];
+    const historical = legacyPrices[id];
+    return historical?.kind === kind ? historical : null;
   };
   let lastReconcile = 0;
   // 将回调和主动对账串行化，避免较早的网络响应覆盖较新的退款状态。
@@ -60,14 +66,21 @@ export function createPayments({ stripe, key, webhookSecret, store, prices, base
         seconds: grants.reduce((total, grant) => total + grant.seconds, 0), grants,
         subscription: state.subscription ? { status: state.subscription.status, cancelAtPeriodEnd: state.subscription.cancelAtPeriodEnd } : null };
     },
-    trial: () => store.transact(state => {
-      if (state.trialClaimed) return;
+    trial: (beforeGrant = () => {}) => store.transact(async state => {
+      if (state.trialClaimed) return false;
+      await beforeGrant();
       state.trialClaimed = true;
       grantOnce(state, { id: 'trial', kind: 'trial', seconds: plans.trial.seconds, startsAt: now(), expiresAt: null });
+      return true;
     }),
-    checkout: planName => store.transact(async state => {
+    checkout: (planName, paymentMethod = 'card', locale = 'zh-CN') => store.transact(async state => {
+      locale = locale === 'en' ? 'en' : 'zh-CN';
+      const returnPath = locale === 'en' ? '/en' : '/pricing';
       const plan = plans[planName];
       if (!plan?.mode) throw new Error('不支持的付费套餐');
+      const allowedMethods = planName === 'monthpass' ? ['alipay', 'wechat_pay'] : ['card'];
+      if (!allowedMethods.includes(paymentMethod)) throw new AppError('PAYMENT_METHOD', '此套餐不支持所选支付方式', 400);
+      if (!prices[planName]) throw new AppError('UNAVAILABLE', '此套餐暂未开放', 503);
       await assertPrice(prices[planName], plan);
       if (state.subscription && planName === 'monthly') {
         const subscription = await stripe.subscriptions.retrieve(state.subscription.id);
@@ -76,7 +89,7 @@ export function createPayments({ stripe, key, webhookSecret, store, prices, base
       if (state.checkout) {
         const previous = await stripe.checkout.sessions.retrieve(state.checkout.id);
         if (previous.status === 'open' && previous.livemode === live) {
-          if (state.checkout.plan === planName) return { url: previous.url };
+          if (state.checkout.plan === planName && state.checkout.price === prices[planName] && (state.checkout.locale || 'zh-CN') === locale && (state.checkout.paymentMethod || 'card') === paymentMethod) return { url: previous.url };
           await stripe.checkout.sessions.expire(previous.id);
         } else if (previous.status === 'complete' && !state.grants.some(g => g.checkout === previous.id)) {
           throw new AppError('PAYMENT_PENDING', '上一笔付款正在归账，请等待额度到账', 409);
@@ -91,13 +104,16 @@ export function createPayments({ stripe, key, webhookSecret, store, prices, base
       const session = await stripe.checkout.sessions.create({
         mode: plan.mode, customer: state.customer, client_reference_id: state.instance,
         adaptive_pricing: { enabled: false },
-        payment_method_types: ['card'], line_items: [{ price: prices[planName], quantity: 1 }],
+        payment_method_types: [paymentMethod],
+        ...(paymentMethod === 'wechat_pay' ? { payment_method_options: { wechat_pay: { client: 'web' } } } : {}),
+        locale: locale === 'en' ? 'en' : 'zh',
+        line_items: [{ price: prices[planName], quantity: 1 }],
         metadata: { ...metadata(), plan: planName },
         ...(plan.mode === 'subscription' ? { subscription_data: { metadata: metadata() } } : {}),
-        success_url: `${baseUrl}/pricing?checkout=returned`, cancel_url: `${baseUrl}/pricing?checkout=canceled`,
+        success_url: `${baseUrl}${returnPath}?checkout=returned`, cancel_url: `${baseUrl}${returnPath}?checkout=canceled`,
       }, { idempotencyKey: `${state.instance}:checkout:${state.checkoutSequence}` });
       if (session.livemode !== live || !session.url?.startsWith('https://checkout.stripe.com/')) throw new Error('收银台验证失败');
-      state.checkout = { id: session.id, plan: planName };
+      state.checkout = { id: session.id, plan: planName, paymentMethod, locale, price: prices[planName] };
       return { url: session.url };
     }),
     cancel: () => store.transact(async state => {
@@ -156,9 +172,15 @@ export function createPayments({ stripe, key, webhookSecret, store, prices, base
         });
         return;
       }
+      if (event.type === 'checkout.session.async_payment_failed') {
+        const session = await stripe.checkout.sessions.retrieve(object.id);
+        if (!owned(session) || !tagged(session) || session.payment_status === 'paid') return;
+        await store.transact(state => { if (state.checkout?.id === session.id) state.checkout = null; });
+        return;
+      }
       if (event.type === 'invoice.paid') {
         const invoice = await stripe.invoices.retrieve(object.id);
-        if (!owned(invoice) || invoice.status !== 'paid' || invoice.currency !== 'usd' || invoice.amount_paid !== plans.monthly.amount ||
+        if (!owned(invoice) || invoice.status !== 'paid' || invoice.currency !== 'usd' ||
           !['subscription_create', 'subscription_cycle'].includes(invoice.billing_reason)) return;
         const id = objectId(invoice.parent?.subscription_details?.subscription || invoice.subscription);
         if (!id) return;
@@ -167,11 +189,12 @@ export function createPayments({ stripe, key, webhookSecret, store, prices, base
         const lines = await stripe.invoices.listLineItems(invoice.id, { limit: 100 });
         if (lines.has_more || lines.data.length !== 1) throw new Error('账单明细不符合套餐');
         const line = lines.data[0];
-        if (priceId(line) !== prices.monthly || line.quantity !== 1 || !line.period?.start || line.period.end <= line.period.start) return;
+        const plan = planForPrice('monthly', priceId(line));
+        if (!plan || invoice.amount_paid !== plan.amount || line.quantity !== 1 || !line.period?.start || line.period.end <= line.period.start) return;
         const payment = await invoicePayment(invoice.id);
         await store.transact(state => {
           state.subscription = { id, status: subscription.status, cancelAtPeriodEnd: subscription.cancel_at_period_end };
-          grantOnce(state, { id: `period:${id}:${line.period.start}`, invoice: invoice.id, ...payment, kind: 'monthly', seconds: plans.monthly.seconds,
+          grantOnce(state, { id: `period:${id}:${line.period.start}`, invoice: invoice.id, ...payment, kind: 'monthly', seconds: plan.seconds, price: priceId(line),
             startsAt: line.period.start * 1000, expiresAt: line.period.end * 1000 });
         });
       } else if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
@@ -187,13 +210,18 @@ export function createPayments({ stripe, key, webhookSecret, store, prices, base
           });
           return;
         }
-        if (session.mode !== 'payment' || session.metadata.plan !== 'topup' || session.currency !== 'usd' || session.amount_total !== plans.topup.amount) return;
+        const kind = session.metadata.plan;
+        if (session.mode !== 'payment' || !['topup', 'monthpass'].includes(kind)) return;
+        if (session.currency !== 'usd') return;
         const lines = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
-        if (lines.has_more || lines.data.length !== 1 || priceId(lines.data[0]) !== prices.topup || lines.data[0].quantity !== 1) return;
+        if (lines.has_more || lines.data.length !== 1 || lines.data[0].quantity !== 1) return;
+        const plan = planForPrice(kind, priceId(lines.data[0]));
+        if (!plan || session.amount_total !== plan.amount) return;
         const payment = await paymentDetails(objectId(session.payment_intent));
         await store.transact(state => {
-          grantOnce(state, { id: `checkout:${session.id}`, checkout: session.id, ...payment, kind: 'topup', seconds: plans.topup.seconds,
-            startsAt: event.created * 1000, expiresAt: (event.created + plans.topup.days * 86400) * 1000 });
+          const startsAt = kind === 'monthpass' ? now() : event.created * 1000;
+          grantOnce(state, { id: `checkout:${session.id}`, checkout: session.id, ...payment, kind, seconds: plan.seconds, price: priceId(lines.data[0]),
+            startsAt, expiresAt: startsAt + plan.days * 86400_000 });
           if (state.checkout?.id === session.id) state.checkout = null;
         });
       } else if (['customer.subscription.updated', 'customer.subscription.deleted'].includes(event.type)) {

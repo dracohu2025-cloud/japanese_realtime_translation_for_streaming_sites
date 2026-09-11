@@ -1,8 +1,9 @@
-// 内测报价只有这一份配置；价格使用最小货币单位，额度使用秒。
+// 套餐报价只有这一份配置；价格使用最小货币单位，额度使用秒。
 export const plans = Object.freeze({
   trial: { name: '免费试用', amount: 0, seconds: 1200 },
-  monthly: { name: 'Kotoba 月度会员', amount: 999, seconds: 36000, mode: 'subscription' },
-  topup: { name: 'Kotoba 加时包', amount: 499, seconds: 18000, mode: 'payment', days: 90 },
+  monthly: { name: 'Kotoba 月度会员', amount: 1999, seconds: 72000, mode: 'subscription' },
+  monthpass: { name: 'Kotoba 一次性月包', amount: 1999, seconds: 72000, mode: 'payment', days: 30 },
+  topup: { name: 'Kotoba 加时包', amount: 999, seconds: 36000, mode: 'payment', days: 90 },
 });
 
 export function requireTestKey(key) {
