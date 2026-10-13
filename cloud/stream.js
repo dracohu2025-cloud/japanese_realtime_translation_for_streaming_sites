@@ -45,7 +45,10 @@ export function openStream(client, accounts, env, onClose) {
       const handshakeTimer = setTimeout(() => handshake.abort(), 10_000);
       let response;
       try {
-        response = await fetch('https://stt-rt.soniox.com/transcribe-websocket', { headers: { Upgrade: 'websocket' }, signal: handshake.signal });
+        response = await fetch('https://stt-rt.soniox.com/transcribe-websocket', {
+          headers: { Upgrade: 'websocket', Authorization: `Bearer ${env.SONIOX_API_KEY}` },
+          signal: handshake.signal,
+        });
       } catch {
         throw new AppError('UPSTREAM_CONNECT', '语音服务连接失败', 502);
       } finally {
@@ -72,7 +75,7 @@ export function openStream(client, accounts, env, onClose) {
       upstream.addEventListener('close', () => { if (!disposed && state !== 'stopping') fail('UPSTREAM_CLOSED', '语音服务已断开，请重新开始'); else close(); });
       upstream.addEventListener('error', () => fail('PROVIDER_NETWORK', '语音服务连接中断'));
       upstream.send(JSON.stringify({
-        api_key: env.SONIOX_API_KEY, model: env.SONIOX_MODEL, client_reference_id: `kotoba:${id}`,
+        model: env.SONIOX_MODEL, client_reference_id: `kotoba:${id}`,
         audio_format: 'pcm_s16le', sample_rate: 16000, num_channels: 1,
         language_hints: ['ja'], enable_language_identification: true, enable_endpoint_detection: true,
         enable_speaker_diarization: options.speakerDiarization,

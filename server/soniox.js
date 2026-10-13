@@ -3,7 +3,10 @@ import { AppError } from './config.js';
 
 /** 供应商边界：不向浏览器转发供应商密钥或原始错误消息。 */
 export function connectSoniox(config, options, emit, endpoint = 'wss://stt-rt.soniox.com/transcribe-websocket') {
-  const socket = new WebSocket(endpoint, { handshakeTimeout: 10_000, maxPayload: 512 * 1024 });
+  const socket = new WebSocket(endpoint, {
+    headers: { Authorization: `Bearer ${config.apiKey}` },
+    handshakeTimeout: 10_000, maxPayload: 512 * 1024,
+  });
   let ended = false;
   let finishTimer;
   const ready = new Promise((resolve, reject) => {
@@ -11,7 +14,7 @@ export function connectSoniox(config, options, emit, endpoint = 'wss://stt-rt.so
       const context = { terms: options.terms };
       if (options.context) context.text = options.context;
       socket.send(JSON.stringify({
-        api_key: config.apiKey, model: config.model, client_reference_id: options.clientReferenceId,
+        model: config.model, client_reference_id: options.clientReferenceId,
         audio_format: 'pcm_s16le', sample_rate: 16000, num_channels: 1,
         language_hints: ['ja'], enable_language_identification: true,
         enable_endpoint_detection: true,

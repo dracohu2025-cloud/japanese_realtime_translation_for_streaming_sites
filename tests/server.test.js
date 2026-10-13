@@ -65,7 +65,9 @@ test('协议只接受经验证的配置，拒绝非法帧', async t => {
   assert.equal((await receive(ws)).code, 'AUTH');
 });
 test('经本机中继连接真实 WebSocket 假上游，验证配置、音频、字幕和资源清理', async t => {
-  const upstream = new WebSocketServer({ port: 0, host: '127.0.0.1' });
+  const upstream = new WebSocketServer({ port: 0, host: '127.0.0.1',
+    verifyClient: info => info.req.headers.authorization === 'Bearer fake-provider-key',
+  });
   await once(upstream, 'listening');
   t.after(() => { for (const ws of upstream.clients) ws.terminate(); upstream.close(); });
   let upstreamConfig;
@@ -93,7 +95,7 @@ test('经本机中继连接真实 WebSocket 假上游，验证配置、音频、
   assert.equal(upstreamConfig.enable_speaker_diarization, true);
   assert.equal(seenBytes, 3200);
   assert.match(upstreamConfig.client_reference_id, /^kotoba:[a-f0-9-]{36}$/);
-  assert.equal(upstreamConfig.api_key, 'fake-provider-key');
+  assert.equal(Object.hasOwn(upstreamConfig, 'api_key'), false, '供应商密钥只通过握手请求头发送');
   assert.deepEqual(upstreamConfig.language_hints, ['ja']);
   assert.equal(upstreamConfig.translation.target_language, 'zh');
   assert.equal(upstreamConfig.audio_format, 'pcm_s16le');

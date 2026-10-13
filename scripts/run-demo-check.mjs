@@ -11,7 +11,7 @@ const pcm = execFileSync('ffmpeg', ['-v','error','-i',directory+'/japanese-study
 if (pcm.length > 60 * 32000) throw new Error('Sample exceeds 60 seconds');
 async function check(language) {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket('wss://stt-rt.soniox.com/transcribe-websocket');
+    const ws = new WebSocket('wss://stt-rt.soniox.com/transcribe-websocket', { headers: { Authorization: `Bearer ${key}` } });
     const tokens = [], events = []; let timer, started, firstTextMs, firstTranslationMs, offset = 0, done = false;
     const timeout = setTimeout(() => finish(new Error('Sample timeout')), 90000);
     function finish(error) {
@@ -19,7 +19,7 @@ async function check(language) {
       if (error) reject(error); else resolve({ language, audioSeconds: pcm.length / 32000, firstTextMs, firstTranslationMs, elapsedMs: Date.now() - started, tokens, events });
     }
     ws.on('open', () => {
-      ws.send(JSON.stringify({ api_key:key, model:'stt-rt-v5', audio_format:'pcm_s16le', sample_rate:16000, num_channels:1, language_hints:['ja'], enable_language_identification:true, enable_endpoint_detection:true, translation:{type:'one_way',target_language:language} }));
+      ws.send(JSON.stringify({ model:'stt-rt-v5', audio_format:'pcm_s16le', sample_rate:16000, num_channels:1, language_hints:['ja'], enable_language_identification:true, enable_endpoint_detection:true, translation:{type:'one_way',target_language:language} }));
       started = Date.now();
       const send = () => { if (offset >= pcm.length) { clearInterval(timer); ws.send(''); return; } ws.send(pcm.subarray(offset, offset + 6400)); offset += 6400; };
       send(); timer = setInterval(send, 200);

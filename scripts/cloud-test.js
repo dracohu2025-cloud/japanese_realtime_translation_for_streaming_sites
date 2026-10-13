@@ -6,7 +6,7 @@ const origin = 'https://kotoba.test';
 const production = process.argv.includes('--production');
 const testEmail = production ? 'public@example.com' : 'owner@example.com';
 const objectName = production ? 'production-v1' : 'closed-beta-v1';
-let otp, mailLanguage, sent = 0, forwardedBytes = 0, upstreamConnections = 0;
+let otp, mailLanguage, upstreamConfig, sent = 0, forwardedBytes = 0, upstreamConnections = 0;
 const mf = new Miniflare({ ...convertV4MiniflareOptions({
   name: 'kotoba-beta', modules: true, scriptPath: 'output/cloud-bundle/worker.js',
   compatibilityDate: '2026-09-07', compatibilityFlags: ['nodejs_compat'],
@@ -29,9 +29,13 @@ const mf = new Miniflare({ ...convertV4MiniflareOptions({
       return new Response(JSON.stringify({ success: challenge.response === 'valid-fixture', hostname: 'kotoba.test', action: 'login' }));
     }
     if (request.url === 'https://stt-rt.soniox.com/transcribe-websocket') {
+      if (request.headers.get('Authorization') !== 'Bearer cloud_fixture') return new Response(null, { status: 401 });
       upstreamConnections++;
       const pair = new WebSocketPair(); pair[1].accept();
-      pair[1].addEventListener('message', event => { if (typeof event.data !== 'string') forwardedBytes += event.data.byteLength; });
+      pair[1].addEventListener('message', event => {
+        if (typeof event.data !== 'string') forwardedBytes += event.data.byteLength;
+        else if (event.data) upstreamConfig = JSON.parse(event.data);
+      });
       return new MFResponse(null, { status: 101, webSocket: pair[0] });
     }
     if (request.url !== 'https://api.resend.com/emails') throw new Error('测试禁止访问真实供应商');
@@ -178,6 +182,8 @@ try {
   });
   first.send(new Uint8Array(3200)); await ended;
   assert.equal(forwardedBytes, 1600, '最后一帧仅转发余额可覆盖的 0.05 秒');
+  assert.equal(Object.hasOwn(upstreamConfig, 'api_key'), false, '云端供应商密钥只通过握手请求头发送');
+  assert.equal(upstreamConfig.translation.target_language, 'zh');
   assert(messages.some(x => x.code === 'QUOTA_EXHAUSTED'));
   assert.equal((await (await call('/api/payments')).json()).seconds, 0);
   assert.equal((await queryBalance(activeToken)).remainingSeconds, 0, '零余额仍可查询');
